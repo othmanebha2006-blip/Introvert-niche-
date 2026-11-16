@@ -162,6 +162,39 @@ palm-up hand when asking.
 **These are the official, locked designs. Keep them 100 % exactly as in the reference images. Never change hair,
 clothes, colours, proportions or face style.**
 Reference files: `characters/girlfriend_YOU_reference.png` and `characters/boyfriend_reference.png`.
+Character sheets: `characters/girlfriend_YOU_sheet.png` and `characters/boyfriend_sheet.png` (colours checked: they match the references).
+
+**What the sheets already cover**
+- Girlfriend: front, ¾, side, back (twice), 3 close-ups. All 3 close-ups use the same angry face with arms crossed.
+- Boyfriend: front, ¾, side, back (twice). Faces: serious, angry, surprised (O mouth), happy (^ ^ eyes and smile), skeptical (one brow raised, smirk).
+  Poses: arms crossed, thinking (hand on chin), walking, waving, crouching.
+
+**Still needed before production (most important first)**
+1. **Seated poses for both, on the sofa and lying in bed under the duvet.** Most shots in this format are seated.
+   Neither sheet has one yet.
+2. **More girlfriend expressions.** She's the POV, so about 45 % of all shots are her close-ups. Right now she only has
+   "angry", which should be saved for the **final shot**. Add:
+   - unimpressed (one brow angled down, flat mouth): her default face
+   - tired (half-closed eyes, flat mouth)
+   - fake tiny smirk
+   - eyes closed / asleep
+   - hand on forehead
+   - side-eye glance
+   - open palm "are you serious" gesture
+3. **Boyfriend acting poses:**
+   - seated, palm up, asking
+   - innocent/worried face (inner brows raised, small frown)
+   - pout
+   - guilty side-eye
+   - holding an object (fries, phone, ketchup bottle)
+   - lying in bed, sick under the duvet (for Script B)
+4. **Hands holding props:** close-up, for the light-blue cutaway shots.
+
+**Style notes from the sheets**
+- Keep his head **smooth like the reference**. A few sheet close-ups show slightly faceted heads; mixed in one video, that looks like a different character.
+- Use the boyfriend's **surprised (O mouth)** and **happy (^ ^)** faces only rarely, for one big beat each.
+  The format works because everyone stays almost deadpan.
+- You only need one back view per character. The second one on each sheet is a near-duplicate.
 
 POV switches to the girlfriend, so **she is the "YOU" character** (the narrator's "you"), and the boyfriend is the partner.
 
