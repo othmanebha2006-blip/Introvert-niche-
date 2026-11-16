@@ -10,3 +10,11 @@
    Then mux the voice: `ffmpeg -i video_noaudio.mp4 -i voice.mp3 -map 0:v -map 1:a -c:v copy -c:a aac -shortest out.mp4`.
 
 For a new episode: change `SEG` (lines + times from step 1) and `SHOTS` in `compose.py`, and add any new props to `scene.py`.
+
+## Episode 2 pipeline ("I'll plan the date this time")
+- `chars/clean/`: every character cutout re-matted with BiRefNet + alpha matting, eroded 2 px, feathered 1 px, white spill removed,
+  trapped background holes cleared (`ep2/matte.py`). Verified: 0 white edge pixels on black/red (`../review/halo_test_*`).
+- `ep2/scene2.py`: set builders (living room with the user's painting `tex/painting_inner.png`, car interior, mattress store, gas station) and props.
+- `ep2/scene3.py`: renders the backgrounds (no characters) + foreground layers (coffee table, dashboard/wheel) + props.
+- `ep2/compose3.py`: shot list. Places the user's exact character cutouts between background and foreground layers, adds props, slow zoom and captions (`captions_lib.py`).
+- `ep2/chars3d.py`: experimental 3D character builder. NOT used (characters must stay the user's exact images); kept only because scene2 imports it.
