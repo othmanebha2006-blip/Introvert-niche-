@@ -48,8 +48,8 @@ word being spoken. It ends on one dry punchline over a close-up of the annoyed "
 | Cutaway "imagination" background | flat light sky-blue, about `#7AAAE0` |
 | Caption highlight box (red) | about `#E00010`, darker edge `#A80000` |
 
-**Colour-role rule:** orange tee + blue jeans = **YOU** (the POV character). Purple tee + teal pants = **PARTNER**.
-Keep this rule in the boyfriend version so the format is instantly recognisable (see §6).
+**Colour-role rule (originals):** orange tee + blue jeans = **YOU** (the POV character). Purple tee + teal pants = **PARTNER**.
+**In our series:** red tee + charcoal pants = **YOU** (girlfriend). Bright-blue tee + navy pants = **BOYFRIEND** (see §6).
 
 ### 2.3 Sets (all reused across episodes)
 1. **Living room** (V1, V3): bright-blue wall; a framed low-poly landscape print (blue/green mountains, beige sky,
@@ -159,24 +159,52 @@ palm-up hand when asking.
 
 ## 6. The flip: character designs for "Your boyfriend…"
 
-POV switches to the girlfriend, so **she becomes the orange/blue "YOU" character** and the boyfriend becomes the purple/teal partner.
+**These are the official, locked designs. Keep them 100 % exactly as in the reference images. Never change hair,
+clothes, colours, proportions or face style.**
+Reference files: `characters/girlfriend_YOU_reference.png` and `characters/boyfriend_reference.png`.
 
-### YOU (girlfriend, POV, deadpan)
-- Same low-poly toy style and the same blank face (dot eyes, thick brow strokes, mouth line).
-- **Simple silhouette:** dark-brown hair in a **low messy bun or ponytail**, so the head stays as clean as the bald original.
-- **Orange T-shirt `#FF6E17`, royal-blue jeans `#1E4FD4`, dark-grey chunky shoes.**
-- Default expression: one eyebrow angled down, flat mouth: "unimpressed".
+POV switches to the girlfriend, so **she is the "YOU" character** (the narrator's "you"), and the boyfriend is the partner.
 
-### PARTNER (boyfriend)
-- Low-poly man, **short messy brown hair `#60311D`**, a bit taller and broader.
-- **Purple T-shirt `#7D4E9E`, dark teal pants `#214657`**, dark-grey shoes.
-- Default expression: earnest, eyebrows raised in the middle (innocent/confused), small frown or hopeful half-smile.
+### YOU: girlfriend (POV, deadpan), locked design
+| Feature | Exact look |
+|---|---|
+| Hair | **Black/very dark charcoal `#413B3A`**, shoulder length, straight, chunky faceted low-poly shape, **side part with a sweeping fringe** falling over the right side of her forehead (viewer's left), covers her ears |
+| Skin | Warm peach `#F7A164` (lit areas toward `#FCC084`) |
+| Face | No nose, no ears visible. **Two black dot eyes**, **two thick short black eyebrow bars** `#1F1B1A`, **one short mouth line** (in the reference: slightly downturned frown) |
+| Top | **Red short-sleeve T-shirt `#D52C24`**, fitted, **V-ish scoop neckline**, hem at the hip |
+| Bottom | **Dark charcoal-grey straight wide trousers `#474447`** |
+| Shoes | Chunky rounded **dark-grey shoes `#584F4F`** |
+| Signature pose | **Arms crossed**, standing straight, angry brows angled down toward the centre |
 
-Keep both characters **100 % consistent** in every image: same hair, same clothes, same proportions.
-Build a character sheet first (front, ¾, seated, close-up, 6 expressions) and use it as the reference image for every shot.
+### BOYFRIEND (partner), locked design
+| Feature | Exact look |
+|---|---|
+| Head | **Completely bald**, big perfectly **round smooth head**, no hair, no ears visible, no nose |
+| Skin | Light peach `#FEC8A0` |
+| Face | **Two black dot eyes**, **two thick short black eyebrow bars**, **one short straight mouth line**. Reference expression: flat mouth, brows slightly angled down (serious/annoyed) |
+| Top | **Bright royal-blue short-sleeve crew-neck T-shirt `#1474EE`**, straight boxy cut, hem at the hip |
+| Bottom | **Dark navy straight trousers `#21325A`** |
+| Shoes | Chunky blocky **dark-grey shoes `#474847`** |
+| Body | Simple tube arms hanging at his sides, mitten-like hands with separated thumb, straight legs |
 
-> Tip: design your own faces, hair and props rather than tracing the original creator's characters.
-> Same format and style, but your channel owns its own cast. That also protects you from reuploads/claims.
+### Expression range to generate (from the same base designs)
+- **Girlfriend (YOU):** unimpressed (one brow down, flat mouth) · annoyed (both brows down, frown, as in the reference) ·
+  tiny smirk · eyes closed (tired) · hand on forehead · arms crossed (signature).
+- **Boyfriend:** innocent (brows raised in the middle) · confused (one brow up) · hopeful half-smile · pout ·
+  sincere/serious (the reference face) · palm-up asking gesture · guilty side-eye.
+
+### Two things to watch with these colours
+1. **Red shirt vs. red caption box.** Captions sit at ~75 % height, which is right over her chest in close-ups. The red
+   highlight box (`#E00010`) is almost the same red as her shirt (`#D52C24`), so it can disappear. Fix (keeps the
+   characters untouched): in her close-ups, frame her a bit higher so the caption lands on the trousers/sofa, or give the
+   red box a **thin white or dark outline (2 px)**. The white text with its shadow still reads fine.
+2. **Blue shirt vs. blue walls.** His shirt (`#1474EE`) is very close to the original's living-room wall (`#4886DA`).
+   Recommended set tweak (characters stay 100 % the same): make the living-room wall a **softer, lighter, greyer blue**
+   (about `#8FB3E0`) or a **warm beige** (about `#E8D3B5`), so he pops out. The night bedroom (dark navy wall) is fine as is,
+   and so are the light-blue cutaway backgrounds for her. For his cutaways, use a light-grey void (`#D9DEE6`) instead.
+
+Build a character sheet from each reference first (front, ¾, seated, close-up, the expressions above) and attach the
+reference image to **every** generation so they never drift.
 
 ---
 
@@ -286,31 +314,34 @@ New set: same style, **blue wall, warm wood cabinets, white fridge**, a warm pen
 
 **Master style block (paste at the start of every prompt):**
 ```
-Low-poly 3D render, toy-like stylized characters with visible faceted polygons, soft global illumination,
-warm table-lamp glow contrasting with cool blue walls, matte materials, gentle ambient occlusion, no outlines,
-clean and cute but deadpan, vertical 9:16, centered eye-level camera.
-Faces: big round heads, two small black dot eyes, two short thick black eyebrow strokes, one short straight mouth line,
-no nose, no ears detail.
+Soft stylized 3D render, smooth clay-like toy characters with simple shapes (slightly faceted chunky hair),
+soft global illumination, warm table-lamp glow contrasting with cool walls, matte materials, gentle ambient occlusion,
+no outlines, clean and cute but deadpan, vertical 9:16, centered eye-level camera.
+Faces: big round heads, two small black dot eyes, two short thick black eyebrow bars, one short mouth line,
+no nose, no visible ears.
 ```
 
-**Character sheet (do this first):**
+**Character descriptions (paste these, and ALWAYS attach the reference image):**
+- `[WOMAN]` = `the woman from the reference image: shoulder-length straight black hair with a side-swept fringe, warm peach skin, black dot eyes, thick black eyebrow bars, short mouth line, red short-sleeve t-shirt with scoop neck, dark charcoal-grey straight trousers, chunky dark-grey shoes. Keep her exactly identical to the reference.`
+- `[MAN]` = `the man from the reference image: completely bald with a big smooth round head, light peach skin, black dot eyes, thick black eyebrow bars, short straight mouth line, bright royal-blue short-sleeve crew-neck t-shirt, dark navy straight trousers, chunky dark-grey shoes. Keep him exactly identical to the reference.`
+
+**Character sheet (do this first, once per character):**
 ```
-[STYLE] Character turnaround sheet on plain light-blue background: a young woman with a simple dark-brown low bun,
-peach skin, orange t-shirt, royal-blue jeans, chunky dark-grey shoes, blocky low-poly hands. Front, three-quarter,
-seated, close-up. Expression row: unimpressed (one eyebrow angled down, flat mouth), annoyed (both brows angled down),
-tiny smirk, eyes closed, hand on forehead, arms crossed.
+[STYLE] Character turnaround sheet on a plain white background of [WOMAN]. Front, three-quarter, side, seated on a
+sofa, head-and-chest close-up. Expression row: unimpressed (one eyebrow angled down, flat mouth), annoyed (both brows
+angled down, frown), tiny smirk, eyes closed, hand on forehead, arms crossed.
 ```
 ```
-[STYLE] Character turnaround sheet on plain light-blue background: a young man with short messy brown hair, peach skin,
-purple t-shirt, dark teal pants, chunky dark-grey shoes. Front, three-quarter, seated, close-up. Expression row:
-innocent (inner eyebrows raised), confused, hopeful half-smile, pouting, sad, palm-up asking gesture.
+[STYLE] Character turnaround sheet on a plain white background of [MAN]. Front, three-quarter, side, seated on a sofa,
+head-and-chest close-up. Expression row: innocent (inner eyebrows raised), confused (one brow up), hopeful half-smile,
+pout, serious (flat mouth, brows slightly down), palm-up asking gesture.
 ```
 
 **Shot templates:**
-- **W (living room):** `[STYLE] Wide shot of a cozy living room: bright blue wall, framed low-poly mountain landscape print centered on the wall, navy fabric three-seat sofa, warm lamp on a small wooden side table at left, light wooden coffee table in the foreground, cream shaggy rug. [WOMAN ref] sits on the right of the sofa, [MAN ref] on the left. She looks unimpressed at him; he looks innocent.`
-- **CU-Y:** `[STYLE] Medium close-up, head and chest, of [WOMAN ref] sitting on the navy sofa, bright blue wall and bottom of the framed print behind her, slightly off-center, [EXPRESSION].`
-- **CU-P:** same as CU-Y with [MAN ref].
-- **INS:** `[STYLE] Isolated close-up of [OBJECT / blocky low-poly hand holding OBJECT] on a plain flat light sky-blue seamless background, nothing else.`
+- **W (living room):** `[STYLE] Wide shot of a cozy living room: soft light greyish-blue wall, framed low-poly mountain landscape print centered on the wall, navy fabric three-seat sofa, warm lamp on a small wooden side table at left, light wooden coffee table in the foreground, cream shaggy rug. [WOMAN] sits on the right of the sofa, [MAN] on the left. She looks unimpressed at him; he looks innocent.`
+- **CU-Y:** `[STYLE] Medium close-up, head and chest, of [WOMAN] sitting on the navy sofa, soft greyish-blue wall and bottom of the framed print behind her, slightly off-center, [EXPRESSION].`
+- **CU-P:** same as CU-Y with [MAN].
+- **INS:** `[STYLE] Isolated close-up of [OBJECT / a simple smooth 3D hand holding OBJECT] on a plain flat light sky-blue seamless background, nothing else.` (Light-grey `#D9DEE6` background when his blue sleeve is in frame.)
 - **Bedroom W:** `[STYLE] Night bedroom, dark navy-blue wall, wooden headboard, two white pillows, navy duvet with soft folds, wooden nightstands with glowing lamps on both sides, front view from the foot of the bed. [MAN] left, [WOMAN] right, lying under the duvet.`
 
 **Consistency tips:** always attach the character sheet as the reference/"character reference" image, keep the same seed or
@@ -326,7 +357,8 @@ so the background never changes between cuts.
 - [ ] "fucking" 4–6×, before mundane nouns
 - [ ] 18–24 still shots, hard cuts, slow zoom on every shot
 - [ ] Captions: ALL CAPS, white bold italic, red active-word box, max 2 lines, at ~75 % height
-- [ ] Orange/blue = YOU, purple/teal = boyfriend, both 100 % consistent
+- [ ] Red tee + charcoal pants + black hair = YOU (girlfriend); bald + blue tee + navy pants = boyfriend; both 100 % identical to `characters/` references
+- [ ] Red caption box still visible over her red shirt (outline added, or caption not on the shirt)
 - [ ] Quiet pad music under everything, no SFX
 - [ ] Final shot = close-up of YOU, angriest face, one-line verdict, then the video just ends
 
