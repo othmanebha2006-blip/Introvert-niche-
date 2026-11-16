@@ -62,7 +62,7 @@ GF_CU = (T.SOFA_X + 0.5, 1.42, 1.08)
 BF_CU = (T.SOFA_X - 0.45, 1.42, 1.19)
 BG = {
     # name: (builder, camera fn, foreground object-name prefixes)
-    'lr_wide': (T.living_room, lambda: T.cam((T.SOFA_X, -3.3, 1.45), (T.SOFA_X, 1.3, 0.8), 24), ('ct_',)),
+    'lr_wide': (T.living_room, lambda: T.cam((T.SOFA_X, -3.3, 1.45), (T.SOFA_X, 1.3, 0.8), 24), ('ct_', 'mug', 'remote', 'magazine')),
     'lr_cu_gf': (T.living_room, lambda: T.cam((GF_CU[0] - 0.1, GF_CU[1] - 1.25, GF_CU[2] + 0.1), (GF_CU[0], GF_CU[1] + 0.5, GF_CU[2] + 0.35), 40, dof=(1.3, 2.2)), ()),
     'lr_cu_bf': (T.living_room, lambda: T.cam((BF_CU[0] + 0.1, BF_CU[1] - 1.25, BF_CU[2] + 0.1), (BF_CU[0], BF_CU[1] + 0.5, BF_CU[2] + 0.35), 40, dof=(1.3, 2.2)), ()),
     'lr_rack': (lambda: (T.living_room(), rack()), lambda: T.cam((T.SOFA_X + 0.5, -2.4, 1.3), (T.SOFA_X + 0.5, 1.2, 1.15), 30), ()),
@@ -71,7 +71,7 @@ BG = {
     'car_cu_gf': (T.car_interior, lambda: T.cam((-0.30, -0.42, 1.12), (-0.36, 0.18, 0.97), 40, dof=(0.62, 2.4)), ()),
     'store_wide': (T.store_front, lambda: T.cam((0.1, -4.0, 1.35), (0.1, 1.5, 1.45), 24), ()),
     'store_cu': (T.store_front, lambda: T.cam((0.0, -1.0, 1.55), (0.0, 1.5, 1.75), 40, dof=(1.3, 2.0)), ()),
-    'gas_wide': (T.gas_station, lambda: T.cam((0, -4.6, 1.5), (0, 1.5, 1.6), 24), ()),
+    'gas_wide': (T.gas_station, lambda: T.cam((0, -4.6, 1.35), (0, 1.5, 1.25), 24), ()),
     'gas_med': (T.gas_station, lambda: T.cam((0, -2.6, 1.3), (0, 0.6, 1.2), 32, dof=(3.0, 4.0)), ()),
     'gas_low': (T.gas_station, lambda: T.cam((0.3, -3.2, 0.55), (0, 1.0, 2.4), 22), ()),
     'gas_truck': (gas_truck_view, lambda: None, ()),

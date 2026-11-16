@@ -101,6 +101,37 @@ def point(loc, energy, color='#FFFFFF', size=0.1):
 SOFA_X = 0.3
 
 
+def living_room_details():
+    sx = SOFA_X
+    # throw pillows + blanket
+    for x, c, rz in ((sx - 1.05, '#E8A33D', 12), (sx + 1.05, '#F1E6D2', -14), (sx + 0.75, '#C8553D', -6)):
+        box('pillow', (x, 1.6, 0.66), (0.42, 0.14, 0.38), mat('pil' + c, c, 0.95), 0.08, 4, rot=(math.radians(-12), 0, math.radians(rz)))
+    box('blanket', (sx + 1.43, 1.35, 0.72), (0.27, 0.7, 0.05), mat('blank', '#7FA88B', 0.95), 0.02)
+    # bookshelf on the right
+    bx = sx + 2.45; wood2 = mat('shelfw', '#8E5A33', 0.6)
+    box('shelf', (bx, 1.82, 1.05), (0.95, 0.35, 2.1), wood2, 0.02)
+    random.seed(7)
+    cols = ['#C8553D', '#3E7CB1', '#F2C14E', '#5B8E7D', '#E8E1D5', '#7C4D8B', '#2F3E46']
+    for row in range(4):
+        z = 0.18 + row * 0.5
+        box('board', (bx, 1.66, z - 0.02), (0.88, 0.32, 0.03), wood2, 0.005)
+        x = bx - 0.4
+        while x < bx + 0.35:
+            w = random.uniform(0.04, 0.08); h = random.uniform(0.26, 0.38)
+            box('book', (x + w / 2, 1.66, z + h / 2), (w, 0.24, h), mat('bk%d%d' % (row, int(x * 100)), random.choice(cols), 0.7), 0.004)
+            x += w + 0.005
+    cyl('vase', (bx + 0.25, 1.66, 2.05), 0.07, 0.22, mat('vase', '#E9E2D6', 0.4))
+    # wall clock + small shelf with plant on the left
+    cyl('clock', (sx - 2.0, 1.97, 2.25), 0.2, 0.05, mat('clock', '#F7F3EA', 0.5), 48, 0.01, (math.pi / 2, 0, 0))
+    cyl('clockrim', (sx - 2.0, 1.985, 2.25), 0.215, 0.03, mat('rim', '#2F3E46', 0.4), 48, 0.005, (math.pi / 2, 0, 0))
+    box('hand1', (sx - 2.0, 1.94, 2.3), (0.02, 0.01, 0.12), mat('hnd', '#2F3E46', 0.4), 0.0)
+    box('hand2', (sx - 1.95, 1.94, 2.25), (0.1, 0.01, 0.02), mat('hnd2', '#2F3E46', 0.4), 0.0)
+    # coffee-table props
+    cyl('mug', (SOFA_X - 0.45, -0.55, 0.48), 0.05, 0.1, mat('mug', '#E8A33D', 0.4), 32, 0.008)
+    box('remote', (SOFA_X + 0.35, -0.6, 0.445), (0.18, 0.05, 0.02), mat('remote', '#222326', 0.5), 0.008, rot=(0, 0, math.radians(20)))
+    box('magazine', (SOFA_X + 0.0, -0.45, 0.442), (0.32, 0.24, 0.012), mat('mag', '#3E7CB1', 0.7), 0.003, rot=(0, 0, math.radians(-12)))
+
+
 def living_room():
     sc = reset()
     wall = mat('wall', '#8FB3E0', 0.9); floor = mat('floor', '#C9A27A', 0.6)
@@ -112,7 +143,8 @@ def living_room():
     box('wall', (0, 2.05, 4), (16, 0.1, 8.2), wall, 0)
     box('wallL', (-4.2, 0, 4), (0.1, 16, 8.2), wall, 0)
     box('skirting', (0, 1.98, 0.06), (16, 0.04, 0.12), white, 0.005)
-    box('rug', (SOFA_X, 0.3, 0.01), (4.2, 2.9, 0.03), rug, 0.012)
+    box('rug', (SOFA_X, 0.3, 0.01), (4.2, 2.9, 0.03), mat('rugtex', '#FFFFFF', 1.0, img=os.path.join(TEX, 'rug.png')), 0.012)
+    living_room_details()
     sx = SOFA_X
     box('sofa_base', (sx, 1.45, 0.22), (2.7, 0.95, 0.30), sofa, 0.06)
     box('sofa_back', (sx, 1.82, 0.62), (2.7, 0.26, 0.9), sofa, 0.08)
@@ -153,8 +185,9 @@ def living_room():
     for ddx in (-0.85, 0.85):
         for ddy in (-0.32, 0.32):
             box('ct_leg', (sx + ddx, cy + ddy, 0.18), (0.08, 0.08, 0.36), ctw, 0.01)
-    area((1.5, -3.2, 3.2), (0.3, 1.2, 0.8), 260, 4.0)
-    area((-3.5, -1.2, 2.5), (0, 1.2, 1), 70, 3.0, '#FFE2BC')
+    area((1.5, -3.2, 3.2), (0.3, 1.2, 0.8), 230, 4.0, '#FFF4E6')
+    area((-3.5, -1.2, 2.5), (0, 1.2, 1), 90, 3.0, '#FFD9A8')
+    area((2.8, 0.5, 2.6), (0.3, 1.5, 1.0), 40, 2.0, '#C9DBFF')
     return sc
 
 
@@ -243,11 +276,11 @@ STAR = None
 
 def gas_station(with_car=False):
     global STAR
-    sc = reset(night=True); sc.view_settings.exposure = -0.35
+    sc = reset(night=True); sc.view_settings.exposure = -0.55
     STAR = mat('star', '#FFFFFF', emit=12)
     box('ground', (0, 2, -0.05), (40, 40, 0.1), mat('asphalt', '#33353B', 0.9), 0)
     box('island', (0, 2.0, 0.08), (4.2, 0.9, 0.16), mat('curb', '#B8B5AE', 0.8), 0.02)
-    canopy_under = mat('canopyU', '#FFFFFF', 0.5, emit=0.55)
+    canopy_under = mat('canopyU', '#FFF6E8', 0.5, emit=0.3)
     box('canopy', (0, 2.0, 4.2), (9, 5, 0.5), mat('canopy', '#EDEDED', 0.6), 0.03)
     plane('canopy_lights', (0, 2.0, 3.94), (8.6, 4.6), canopy_under, rot=(0, 0, 0))
     box('canopy_band', (0, -0.52, 4.2), (9.02, 0.04, 0.5), mat('band', '#D42A22', 0.5), 0.0)

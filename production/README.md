@@ -18,3 +18,9 @@ For a new episode: change `SEG` (lines + times from step 1) and `SHOTS` in `comp
 - `ep2/scene3.py`: renders the backgrounds (no characters) + foreground layers (coffee table, dashboard/wheel) + props.
 - `ep2/compose3.py`: shot list. Places the user's exact character cutouts between background and foreground layers, adds props, slow zoom and captions (`captions_lib.py`).
 - `ep2/chars3d.py`: experimental 3D character builder. NOT used (characters must stay the user's exact images); kept only because scene2 imports it.
+
+### Episode 2 v2 (animated)
+- `ep2/faces.py`: talk (open mouth) + blink (closed eyes) sprites painted on the clean cutouts, in the characters' own style.
+- `ep2/puppet.py`: cut-out puppetry on the user's images (his arm: holding phone / raised / pointing). Saved in `ep2/pup/`.
+- `ep2/compose4.py`: per-frame animation (voice-driven mouth flaps on quoted lines, blinks, breathing), per-scene lighting grade + rim light,
+  drop/contact shadows, props in hand, eased push-in, captions.
