@@ -1,0 +1,222 @@
+"""TYPE TWO renderer: Mercedes C300 W204."""
+import json, glob, subprocess, sys, wave
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+sys.path.insert(0, '/home/user/Introvert-niche-/type_one/scripts')
+import narrator
+
+S = '/tmp/claude-0/-home-user-Introvert-niche-/4b8ae4f4-60f4-56d8-b6fb-0b7196bc6596/scratchpad'
+U = '/root/.claude/uploads/4b8ae4f4-60f4-56d8-b6fb-0b7196bc6596/'
+W, H, FPS = 1080, 1920, 30
+VOICE = glob.glob(U + 'c352a62a*.mp3')[0]
+CLIP = {1: glob.glob(U + '57ff2974*')[0], 2: glob.glob(U + '1dd6ed17*')[0], 3: glob.glob(U + 'ef4ae6f6*')[0]}
+CUT = 5.62          # end of the hook in the voiceover
+GAP = 5.0           # silent B-roll break inserted after the hook
+DUR = 76.2 + GAP
+
+def T(x):           # voiceover time -> video time
+    return x if x < CUT else x + GAP
+
+def up(i):
+    im = Image.open(glob.glob(U + i + '*')[0]).convert('RGBA'); return im.crop(im.getbbox())
+A = {'c63': up('4c203a47'), 'c63side': up('75d10af9'), 'hood': up('40dc07b0'), 'engine': up('a38b4219'),
+     'intake': up('c4dcbd72'), 'exhaust': up('f2376737'), 'ecu': up('4245a9e9'), 'headers': up('6c902933')}
+
+F_CAP = ImageFont.truetype(S + '/fonts2/package/800ExtraBold/Montserrat_800ExtraBold.ttf', 96)
+BLACK = S + '/fonts2/package/900Black/Montserrat_900Black.ttf'
+_f = {}
+def fb(s):
+    if s not in _f: _f[s] = ImageFont.truetype(BLACK, s)
+    return _f[s]
+RED, BLU, GRN = '#e8202a', '#1e7be0', '#22a845'
+
+# ---------------- narrator: (voice time, pos, arm, eyes, brows) ----------------
+L_ = 'pointL'
+MAN = [
+    (0.00, 'C', 'hips', 'C', 'up'), (0.48, 'R', L_, 'L', 'up'), (2.30, 'R', L_, 'L', 'N'),
+    (2.80, 'R', L_, 'L', 'up'), (4.34, 'C', 'hips', 'C', 'one'),
+    (5.70, 'CORNER', 'hips', 'C', 'N'),
+    (11.88, 'BIG', 'hips', 'C', 'one'), (13.36, 'C', 'hips', 'C', 'up'),
+    (15.06, 'R', L_, 'L', 'N'), (17.50, 'R', L_, 'L', 'up'), (19.42, 'R', L_, 'U', 'N'), (21.74, 'R', L_, 'U', 'up'),
+    (23.28, 'BIG', 'hips', 'C', 'N'), (25.16, 'BIG', 'hips', 'C', 'one'),
+    (27.32, 'C', 'hips', 'U', 'up'), (29.54, 'L', 'hips', 'U', 'up'), (33.12, 'R', 'hips', 'U', 'N'),
+    (36.70, 'L', 'hips', 'U', 'one'), (41.04, 'R', 'hips', 'U', 'up'), (45.20, 'BIG', 'hips', 'C', 'up'),
+    (46.90, 'BIG', 'hips', 'C', 'frown'), (48.64, 'C', 'hips', 'C', 'frown'),
+    (51.90, 'CORNER', 'hips', 'C', 'N'),
+    (57.00, 'C', 'hips', 'C', 'one'), (59.00, 'L', 'hips', 'R', 'N'), (61.38, 'C', 'hips', 'C', 'up'),
+    (62.76, 'BIG', 'hips', 'C', 'one'), (64.56, 'BIG', 'hips', 'L', 'one'), (66.24, 'C', 'hips', 'C', 'up'),
+    (67.54, 'CORNER', 'hips', 'C', 'N'),
+    (70.54, 'R', L_, 'L', 'N'), (73.46, 'R', L_, 'L', 'up'), (75.16, 'C', 'hips', 'C', 'up'),
+]
+
+# ---------------- elements: (voice time, [items]) ; item times are voice times ----------------
+def I(k, cx, cy, mw, mh, t0): return ('img', k, cx, cy, mw, mh, t0)
+def X(s, cx, cy, size, col, t0): return ('txt', s, cx, cy, size, col, t0)
+def V(n, src_start, src_len, t0, t1): return ('clip', n, src_start, src_len, t0, t1)
+
+BEATS = [
+    (0.00, [I('c63', 540, 560, 1000, 700, 0.00), X('AMG', 540, 130, 140, RED, 1.78)]),
+    (2.80, [I('hood', 540, 560, 1000, 700, 2.80)]),
+    (CUT, [V(3, 0.0, GAP, CUT, CUT)]),                       # silent break, clip with its own sound
+    (5.78, [V(2, 0.0, 3.9, 5.78, 11.88), X('2008-2014', 540, 140, 130, RED, 6.66),
+            X('MERCEDES C300', 540, 270, 90, RED, 8.26), X('W204', 540, 380, 90, RED, 10.20)]),
+    (11.88, [X('NO MODERN', 540, 470, 130, GRN, 13.36), X('PRICES', 540, 620, 130, GRN, 14.02)]),
+    (15.06, [I('hood', 540, 560, 1000, 700, 15.06), X('NATURALLY ASPIRATED', 540, 130, 70, BLU, 16.28)]),
+    (17.50, [I('engine', 540, 580, 900, 640, 17.50), X('V6', 540, 130, 140, BLU, 17.50),
+             X('3.0L', 540, 130, 140, BLU, 19.42), X('3.0L  /  3.5L', 540, 130, 120, BLU, 21.74)]),
+    (23.28, []),
+    (27.32, [I('engine', 540, 520, 560, 400, 27.32),
+             I('intake', 175, 250, 320, 230, 29.54), X('INTAKE', 540, 100, 100, BLU, 29.54),
+             I('headers', 905, 250, 320, 230, 33.12), X('HEADERS', 540, 100, 100, BLU, 33.12),
+             I('exhaust', 175, 790, 320, 230, 36.70), X('CAT-BACK EXHAUST', 540, 100, 80, BLU, 36.70),
+             I('ecu', 905, 790, 320, 230, 41.04), X('ECU TUNE', 540, 100, 100, BLU, 41.04)]),
+    (45.20, [X('4 MODS', 540, 200, 150, RED, 45.20), I('intake', 145, 520, 250, 200, 45.20),
+             I('headers', 405, 520, 250, 200, 45.20), I('exhaust', 675, 520, 250, 200, 45.20),
+             I('ecu', 935, 520, 250, 200, 45.20)]),
+    (46.90, [X('NO TURBO', 540, 560, 170, RED, 47.56)]),
+    (51.90, [V(1, 0.0, 3.46, 51.90, 57.00)]),
+    (57.00, []),
+    (62.76, [X('NO AMG BADGE', 540, 560, 100, RED, 63.56)]),
+    (67.54, [V(2, 1.5, 2.4, 67.54, 70.54)]),
+    (70.54, [I('hood', 540, 560, 1000, 700, 70.54), X('W204 C300', 540, 130, 120, RED, 71.92)]),
+    (73.46, [I('c63', 540, 560, 1000, 700, 73.46), X('C63 AMG', 540, 130, 120, RED, 74.54)]),
+]
+
+def current(lst, tv):
+    cur = lst[0]
+    for b in lst:
+        if b[0] <= tv: cur = b
+    return cur
+
+def popk(t, t0, d=0.13):
+    x = (t - t0) / d
+    if x >= 1: return 1.0
+    if x <= 0: return 0.01
+    return 0.5 + 0.7 * (x / 0.7) if x < 0.7 else 1.2 - 0.2 * (x - 0.7) / 0.3
+
+_ic = {}
+def fit(k, mw, mh):
+    key = (k, mw, mh)
+    if key not in _ic:
+        im = A[k]; r = min(mw / im.width, mh / im.height)
+        _ic[key] = im.resize((int(im.width * r), int(im.height * r)), Image.LANCZOS)
+    return _ic[key]
+
+# ---------------- clips: streamed frames ----------------
+CLIP_H = 1560
+class Stream:
+    def __init__(self, n, start, length, t0, t1):
+        self.t0, self.t1 = t0, t1
+        speed = length / (t1 - t0)
+        vf = (f"trim=start={start}:duration={length},setpts=(PTS-STARTPTS)/{speed},fps={FPS},"
+              f"scale={W}:{CLIP_H}:force_original_aspect_ratio=increase,crop={W}:{CLIP_H}")
+        self.p = subprocess.Popen(['ffmpeg', '-v', 'error', '-i', CLIP[n], '-vf', vf, '-an', '-f', 'rawvideo',
+                                   '-pix_fmt', 'rgb24', '-'], stdout=subprocess.PIPE)
+        self.idx, self.last = -1, None
+    def frame(self, t):
+        want = int((t - self.t0) * FPS)
+        while self.idx < want:
+            b = self.p.stdout.read(W * CLIP_H * 3)
+            if len(b) < W * CLIP_H * 3: break
+            self.last = Image.frombytes('RGB', (W, CLIP_H), b); self.idx += 1
+        return self.last
+_streams = {}
+
+def draw_items(fr, t):
+    tv = t if t < CUT else (t - GAP if t >= CUT + GAP else CUT)
+    if CUT <= t < CUT + GAP: tv = CUT
+    _, items = current(BEATS, tv)
+    texts = {}
+    for it in items:
+        if it[0] == 'clip':
+            _, n, s0, ln, a, b = it
+            t0, t1 = T(a), (T(b) if b > a else T(a) + GAP)
+            if a == CUT: t0, t1 = CUT, CUT + GAP
+            key = (n, s0, a)
+            if key not in _streams: _streams[key] = Stream(n, s0, ln, t0, t1)
+            f = _streams[key].frame(t)
+            if f is not None: fr.paste(f, (0, 0))
+    for it in items:
+        if it[0] == 'img' and T(it[-1]) <= t:
+            _, k, cx, cy, mw, mh, t0 = it
+            im = fit(k, mw, mh); s = popk(t, T(t0))
+            if s != 1.0: im = im.resize((max(1, int(im.width * s)), max(1, int(im.height * s))))
+            fr.alpha_composite(im, (int(cx - im.width / 2), int(cy - im.height / 2)))
+        if it[0] == 'txt' and T(it[-1]) <= t:
+            texts[(it[2], it[3])] = it
+    for it in texts.values():
+        _, s_, cx, cy, size, col, t0 = it
+        k = popk(t, T(t0))
+        ImageDraw.Draw(fr).text((cx, cy), s_, font=fb(max(8, int(size * k))), fill=col, anchor='mm',
+                                stroke_width=max(2, int(7 * k)), stroke_fill='black')
+
+POS = {'C': (540, 1900, 0.64), 'R': (800, 1900, 0.6), 'L': (280, 1900, 0.6), 'BIG': (540, 2560, 1.2),
+       'CORNER': (930, 1915, 0.38)}
+_pc = {}
+def draw_man(fr, t):
+    tv = t if t < CUT else (t - GAP if t >= CUT + GAP else CUT + 0.1)
+    t0, pos, arm, eyes, brows = current(MAN, tv)
+    cx, fy, s = POS[pos]
+    blink = (t % 2.9) < 0.1
+    key = (arm, eyes, brows, blink, s)
+    if key not in _pc: _pc[key] = narrator.render(arm, eyes, brows, blink, s)
+    ax, ay = narrator.anchor(arm)
+    fr.alpha_composite(_pc[key], (int(cx - ax * s), int(fy - ay * s)))
+
+# ---------------- caption: one word ----------------
+words = json.load(open(S + '/c300/words.json'))
+def draw_caption(fr, t):
+    if CUT <= t < CUT + GAP: return
+    tv = t if t < CUT else t - GAP
+    cur = None
+    for w in words:
+        if w['s'] - 0.02 <= tv: cur = w
+    if cur is None or tv > cur['e'] + 0.6: return
+    ImageDraw.Draw(fr).text((W / 2, 1000), cur['w'], font=F_CAP, fill='white', anchor='mm',
+                            stroke_width=9, stroke_fill='black')
+
+def frame(t):
+    fr = Image.new('RGBA', (W, H), 'white')
+    draw_items(fr, t); draw_man(fr, t); draw_caption(fr, t)
+    return fr.convert('RGB')
+
+def build_sfx(path):
+    sr = 44100; out = np.zeros(int(sr * (DUR + 1)), np.float32)
+    n = int(sr * 0.09); tt = np.arange(n) / sr
+    pop = (np.sin(2 * np.pi * (950 * tt - 3500 * tt ** 2)) * np.exp(-tt / 0.022)).astype(np.float32)
+    seen = set()
+    for _, items in BEATS:
+        for it in items:
+            if it[0] == 'clip': continue
+            t0 = round(T(it[-1]), 2)
+            if t0 in seen: continue
+            seen.add(t0); i = int(t0 * sr); out[i:i + n] += pop[:len(out) - i] * 0.35
+    with wave.open(path, 'wb') as wf:
+        wf.setnchannels(1); wf.setsampwidth(2); wf.setframerate(sr)
+        wf.writeframes((np.clip(out, -1, 1) * 32767).astype(np.int16).tobytes())
+
+if __name__ == '__main__':
+    OUT = sys.argv[1]
+    if len(sys.argv) > 2:
+        for tt in [float(x) for x in sys.argv[2].split(',')]:
+            _streams.clear(); frame(tt).save(f'{S}/c300/p_{tt:05.2f}.jpg', quality=80)
+        sys.exit()
+    build_sfx(S + '/c300/sfx.wav')
+    voice_fx = ('highpass=f=75,equalizer=f=250:t=q:w=1:g=-2,equalizer=f=3200:t=q:w=1.2:g=3.5,'
+                'acompressor=threshold=-22dB:ratio=3:attack=5:release=90:makeup=2,'
+                'loudnorm=I=-14:TP=-1.5:LRA=7,aresample=44100')
+    fc = (f"[1:a]{voice_fx},asplit[v1][v2];[v1]atrim=0:{CUT},asetpts=PTS-STARTPTS[va];"
+          f"[v2]atrim=start={CUT},asetpts=PTS-STARTPTS[vb];"
+          f"[2:a]atrim=0:{GAP},asetpts=PTS-STARTPTS,loudnorm=I=-16:TP=-2,aresample=44100,"
+          f"afade=t=in:d=0.15,afade=t=out:st={GAP - 0.4}:d=0.4,aformat=channel_layouts=mono[cl];"
+          f"[va]aformat=channel_layouts=mono[va2];[vb]aformat=channel_layouts=mono[vb2];"
+          f"[va2][cl][vb2]concat=n=3:v=0:a=1[voice];[3:a]aformat=channel_layouts=mono[sfx];"
+          f"[voice][sfx]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95[a]")
+    p = subprocess.Popen(['ffmpeg', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}',
+                          '-r', str(FPS), '-i', '-', '-i', VOICE, '-i', CLIP[3], '-i', S + '/c300/sfx.wav',
+                          '-filter_complex', fc, '-map', '0:v', '-map', '[a]', '-c:v', 'libx264', '-preset', 'medium',
+                          '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-shortest',
+                          '-movflags', '+faststart', OUT], stdin=subprocess.PIPE)
+    for i in range(int(DUR * FPS)):
+        p.stdin.write(frame(i / FPS).tobytes())
+    p.stdin.close(); p.wait(); print('done', OUT)
