@@ -10,8 +10,8 @@ U = '/root/.claude/uploads/4b8ae4f4-60f4-56d8-b6fb-0b7196bc6596/'
 W, H, FPS = 1080, 1920, 30
 VOICE = glob.glob(U + 'c352a62a*.mp3')[0]
 CLIP = {1: glob.glob(U + '57ff2974*')[0], 2: glob.glob(U + '1dd6ed17*')[0], 3: glob.glob(U + 'ef4ae6f6*')[0]}
-CUT = 5.62          # end of the hook in the voiceover
-GAP = 5.0           # silent B-roll break inserted after the hook
+CUT = 5.56          # end of the hook in the voiceover
+GAP = 5.35           # silent B-roll break inserted after the hook
 _W = json.load(open(S + '/c300/words.json'))
 # pauses between sentences longer than 0.25 s are shortened: keep 0.08 s after a word, 0.06 s before the next
 def _silences(path, thr=-40, mind=0.35):
@@ -23,6 +23,7 @@ def _silences(path, thr=-40, mind=0.35):
     return list(zip(st, en))
 # only real silences are shortened, each down to 0.2 s (0.1 s kept on both sides)
 CUTS = [(a + 0.1, b - 0.1) for a, b in _silences(VOICE) if b - a > 0.3 and a > 0.5 and b < 75.5]
+CUTS = sorted(CUTS + [(5.57, 5.74)])   # breath right after the hook, so the voice resumes straight after the dyno
 def M(x):           # original voice time -> tightened voice time
     d = 0.0
     for g0, g1 in CUTS:
@@ -175,7 +176,7 @@ def shined(im, st):
     return _white[key]
 
 # dyno break: only the engine sound is used; the car shakes with it (pattern measured from the reference)
-DYNO_SRC = CLIP[3]
+DYNO_SRC = glob.glob(U + '486ebe9b*')[0]   # sound only
 SHAKE_DX = [0]*3 + [-1]*7 + [1]*5 + [0]*3 + [1]*7 + [-1]*5          # 30-frame cycle, units of amplitude
 SHAKE_DY = [0]*3 + [-1]*4 + [1]*5 + [-1]*3
 SHAKE_DY = SHAKE_DY + SHAKE_DY
@@ -317,7 +318,7 @@ if __name__ == '__main__':
     fc = (f"[1:a]{voice_fx},asplit[v1][v2];[v1]atrim=0:{CUT},asetpts=PTS-STARTPTS[va];"
           f"[v2]atrim=start={CUT},asetpts=PTS-STARTPTS[vb];"
           f"[2:a]atrim=0:{GAP},asetpts=PTS-STARTPTS,loudnorm=I=-16:TP=-2,aresample=44100,"
-          f"afade=t=in:d=0.15,afade=t=out:st={GAP - 0.4}:d=0.4,aformat=channel_layouts=mono[cl];"
+          f"afade=t=in:d=0.01,afade=t=out:st={GAP - 0.4}:d=0.4,aformat=channel_layouts=mono[cl];"
           f"[va]aformat=channel_layouts=mono[va2];[vb]aformat=channel_layouts=mono[vb2];"
           f"[va2][cl][vb2]concat=n=3:v=0:a=1[voice];[3:a]aformat=channel_layouts=mono[sfx];"
           f"[voice][sfx]amix=inputs=2:duration=longest:normalize=0,alimiter=limit=0.95[a]")
