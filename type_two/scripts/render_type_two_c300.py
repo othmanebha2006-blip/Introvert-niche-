@@ -66,7 +66,7 @@ L_ = 'pointL'
 MAN = [
     (0.00, 'C', 'hips', 'C', 'up'), (0.48, 'R', L_, 'L', 'up'), (2.30, 'R', L_, 'L', 'N'),
     (2.80, 'R', L_, 'L', 'up'), (4.34, 'C', 'hips', 'C', 'one'),
-    (5.70, 'CORNER', 'hips', 'C', 'N'),
+    (5.70, 'C', 'hips', 'C', 'up'),
     (5.78, 'R', L_, 'L', 'up'), (8.26, 'R', L_, 'L', 'N'), (10.20, 'R', L_, 'U', 'one'),
     (11.88, 'BIG', 'hips', 'C', 'one'), (13.36, 'C', 'hips', 'C', 'up'),
     (15.06, 'R', L_, 'L', 'N'), (17.50, 'R', L_, 'L', 'up'), (19.42, 'R', L_, 'U', 'N'), (21.74, 'R', L_, 'U', 'up'),
@@ -90,7 +90,6 @@ TYPE_CPS = 0.05     # seconds per typed character
 
 BEATS = [
     (0.00, [I('front', 540, 560, 1000, 700, 0.00)]),
-    (CUT, [V(3, 0.0, GAP, CUT, CUT)]),                       # silent break, clip with its own sound
     (5.78, [I('side', 540, 640, 1020, 520, 5.78), Y('2008-2014', 540, 140, 130, RED, 6.66),
             Y('MERCEDES C300', 540, 270, 90, RED, 8.26), Y('W204', 540, 380, 90, RED, 10.20)]),
     (11.88, [I('side', 540, 600, 1020, 520, 11.88), X('NO MODERN PRICES', 540, 140, 80, GRN, 13.36)]),
@@ -175,7 +174,31 @@ def shined(im, st):
         _white[key] = Image.fromarray(a.astype(np.uint8))
     return _white[key]
 
+# dyno break: only the engine sound is used; the car shakes with it (pattern measured from the reference)
+DYNO_SRC = CLIP[3]
+SHAKE_DX = [0]*3 + [-1]*7 + [1]*5 + [0]*3 + [1]*7 + [-1]*5          # 30-frame cycle, units of amplitude
+SHAKE_DY = [0]*3 + [-1]*4 + [1]*5 + [-1]*3
+SHAKE_DY = SHAKE_DY + SHAKE_DY
+def _dyno_env():
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', DYNO_SRC, '-t', str(GAP), '-ac', '1', '-ar', '44100',
+                          '-f', 'f32le', '-'], capture_output=True, check=True).stdout
+    a = np.frombuffer(raw, np.float32); hop = 44100 // FPS
+    rms = np.array([np.sqrt(np.mean(a[i:i + hop] ** 2)) for i in range(0, len(a), hop)])
+    rms = rms / max(np.percentile(rms, 95), 1e-6)
+    return np.clip(rms, 0, 1.3)
+DYNO_ENV = _dyno_env()
+
+def draw_dyno(fr, t):
+    k = int((t - CUT) * FPS)
+    e = DYNO_ENV[min(k, len(DYNO_ENV) - 1)]
+    im = fit('front', 1000, 700)
+    ax, ay = 0.005 * im.width * e, 0.003 * im.width * e
+    dx, dy = SHAKE_DX[k % 30] * ax, SHAKE_DY[k % 30] * ay
+    fr.alpha_composite(im, (int(540 - im.width / 2 + dx), int(560 - im.height / 2 + dy)))
+
 def draw_items(fr, t):
+    if CUT <= t < CUT + GAP:
+        draw_dyno(fr, t); return
     tv = V2O(t)
     _, items = current(BEATS, tv)
     texts = {}
@@ -299,7 +322,7 @@ if __name__ == '__main__':
           f"[va2][cl][vb2]concat=n=3:v=0:a=1[voice];[3:a]aformat=channel_layouts=mono[sfx];"
           f"[voice][sfx]amix=inputs=2:duration=longest:normalize=0,alimiter=limit=0.95[a]")
     p = subprocess.Popen(['ffmpeg', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}',
-                          '-r', str(FPS), '-i', '-', '-i', S + '/c300/voice_tight.wav', '-i', CLIP[3], '-i', S + '/c300/sfx.wav',
+                          '-r', str(FPS), '-i', '-', '-i', S + '/c300/voice_tight.wav', '-i', DYNO_SRC, '-i', S + '/c300/sfx.wav',
                           '-filter_complex', fc, '-map', '0:v', '-map', '[a]', '-c:v', 'libx264', '-preset', 'medium',
                           '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-shortest',
                           '-movflags', '+faststart', OUT], stdin=subprocess.PIPE)
