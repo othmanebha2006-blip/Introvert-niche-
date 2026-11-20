@@ -84,26 +84,27 @@ The exact same fully upgraded engine, with a silver ECU module and a laptop show
 
 ---
 
-## ج. القطع منفردة (لصف "Four mods")
+## ج. المطوّرات منفردة (برومت مستقل لكل قطعة)
+كل برومت كامل لوحده، تقدر تستعمله في محادثة جديدة. أرفق معه صورة المحرك RB25 أو الإنتركولر من صور الـ R34 كمرجع للستايل.
 
-**13. Intake**
+**13. Intake** (يظهر عند: performance intake)
 ```
-A performance cold air intake kit with a red cone filter and polished intake pipe.
-```
-
-**14. Headers**
-```
-A set of polished stainless steel long-tube exhaust headers for a V6 engine.
+A performance cold air intake kit for a Mercedes-Benz C300 W204 V6 engine: a large red cone air filter attached to a polished aluminum intake pipe with a black silicone coupler. Hyper-realistic glossy 3D product render, studio lighting with soft highlights and deep reflections, sharp details, rich colors, isolated on a transparent background (PNG), centered, three-quarter view, no text, no logos, no watermark, no shadow.
 ```
 
-**15. Exhaust**
+**14. Headers** (يظهر عند: headers)
 ```
-A stainless steel high-flow cat-back exhaust system with dual polished tips.
+A set of polished stainless steel long-tube exhaust headers for a Mercedes-Benz V6 engine: two separate banks of three smooth welded tubes merging into collectors, with mounting flanges. Hyper-realistic glossy 3D product render, studio lighting with soft highlights and deep reflections, sharp details, rich colors, isolated on a transparent background (PNG), centered, three-quarter view, no text, no logos, no watermark, no shadow.
 ```
 
-**16. ECU**
+**15. Exhaust** (يظهر عند: cat-back exhaust)
 ```
-A silver car ECU module with a laptop showing a colorful tuning map.
+A high-flow stainless steel cat-back exhaust system for a Mercedes-Benz C300 W204 sedan: mandrel-bent pipes, a polished muffler and dual round chrome exhaust tips. Hyper-realistic glossy 3D product render, studio lighting with soft highlights and deep reflections, sharp details, rich colors, isolated on a transparent background (PNG), centered, three-quarter view, no text, no logos, no watermark, no shadow.
+```
+
+**16. ECU tune** (يظهر عند: custom ECU tune)
+```
+A silver automotive ECU module with a black connector next to an open laptop whose screen shows a colorful engine tuning map and a rising power graph, connected with an OBD cable. Hyper-realistic glossy 3D product render, studio lighting with soft highlights and deep reflections, sharp details, rich colors, isolated on a transparent background (PNG), centered, three-quarter view, no text, no logos, no watermark, no shadow.
 ```
 
 ---
