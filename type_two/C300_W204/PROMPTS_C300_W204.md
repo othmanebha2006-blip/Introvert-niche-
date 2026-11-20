@@ -146,39 +146,22 @@ The silver C63 AMG W204 and the black C300 W204 side by side, front three-quarte
 
 ---
 
-## و. مقاطع فيديو (B-roll)
-بأداة فيديو مثل Sora أو Kling أو Runway، بمقاس **9:16**.
+## و. مقاطع فيديو (B-roll): جمل للبحث
+ابحث بهذه الجمل في YouTube أو TikTok أو Pexels، وأرسل لي الفيديو كاملًا وأنا أقصّه على المدة.
+تجد بها أكثر بالإنجليزية. أي فيديو للسيارة نفسها W204 (ويفضّل الأسود) يكفي.
 
-| المقطع | المدة في الفيديو | ولّده بمدة | يغطي |
+| المقطع | المدة | جملة البحث | يغطي |
 |---|---|---|---|
-| V1 | 5 ث | 6 ث | فاصل بلا كلام بعد الخطّاف |
-| V2 | 7 ث | 8 ث | "What you get is a sharper… comfort of a Mercedes." |
-| V3 | 5 ث | 6 ث | "…the smooth ride… easy to underestimate." |
-| V4 | 5 ث | 6 ث | "A clean German sleeper… to get noticed." |
+| V1 | 5 ث | `Mercedes C300 W204 dyno run` | فاصل بلا كلام بعد الخطّاف |
+| V2 | 7 ث | `Mercedes W204 C300 acceleration exhaust sound` | "What you get is a sharper… comfort of a Mercedes." |
+| V3 | 5 ث | `Mercedes W204 POV night drive` | "…the smooth ride… easy to underestimate." |
+| V4 | 5 ث | `black Mercedes W204 night cinematic` | "A clean German sleeper… to get noticed." |
 
-> ولّد كل مقطع بثانية زيادة لأقصّه على التوقيت الدقيق. المدة النهائية تتحدد من التعليق الصوتي.
-
-**V1** (بعد الخطّاف، 6 ثوانٍ)
-```
-Vertical 9:16 video, a black 2012 Mercedes C300 W204 sedan revving on a dyno in a garage, exhaust popping, cinematic lighting.
-```
-
-**V2** (يظهر عند: What you get، 8 ثوانٍ)
-```
-Vertical 9:16 video, black Mercedes C300 W204 accelerating on an empty highway at sunset, rear tracking shot.
-```
-
-**V3** (يظهر عند: smooth ride، 6 ثوانٍ)
-```
-Vertical 9:16 video, interior POV driving a Mercedes C300 W204 at night through the city, hands on the steering wheel.
-```
-
-**V4** (يظهر عند: A clean German sleeper، 6 ثوانٍ)
-```
-Vertical 9:16 video, black Mercedes C300 W204 slowly rolling past the camera at night under street lights, low angle.
-```
-
----
+**إذا لم تجد:**
+- V1 بديل: `Mercedes V6 M272 exhaust rev`
+- V2 بديل: `W204 C350 straight pipe flyby`
+- V3 بديل: `W204 interior driving POV`
+- V4 بديل: `W204 sedan rolling shot`
 
 ## مطلوب أيضًا
 - **التعليق الصوتي (mp3)** بنفس صوت الفيديو المرجعي.
