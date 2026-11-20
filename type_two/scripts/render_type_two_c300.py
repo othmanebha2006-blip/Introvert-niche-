@@ -12,16 +12,41 @@ VOICE = glob.glob(U + 'c352a62a*.mp3')[0]
 CLIP = {1: glob.glob(U + '57ff2974*')[0], 2: glob.glob(U + '1dd6ed17*')[0], 3: glob.glob(U + 'ef4ae6f6*')[0]}
 CUT = 5.62          # end of the hook in the voiceover
 GAP = 5.0           # silent B-roll break inserted after the hook
-DUR = 76.2 + GAP
+_W = json.load(open(S + '/c300/words.json'))
+# pauses between sentences longer than 0.25 s are shortened: keep 0.08 s after a word, 0.06 s before the next
+CUTS = []
+for a, b in zip(_W, _W[1:]):
+    if b['s'] - a['e'] > 0.25:
+        CUTS.append((a['e'] + 0.08, b['s'] - 0.06))
+def M(x):           # original voice time -> tightened voice time
+    d = 0.0
+    for g0, g1 in CUTS:
+        if x >= g1: d += g1 - g0
+        elif x > g0: d += x - g0
+    return x - d
+def Minv(y):        # tightened voice time -> original voice time
+    x, d = y, 0.0
+    for g0, g1 in CUTS:
+        if g0 - d <= y: d += g1 - g0
+        else: break
+    return y + d
+VOICE_LEN = 76.12
+DUR = M(VOICE_LEN) + GAP + 0.1
 
-def T(x):           # voiceover time -> video time
-    return x if x < CUT else x + GAP
+def T(x):           # original voice time -> video time
+    return M(x) if x < CUT else M(x) + GAP
+def V2O(t):         # video time -> original voice time (break maps to CUT)
+    if t < CUT: return Minv(t)
+    if t < CUT + GAP: return CUT
+    return Minv(t - GAP)
 
 def up(i):
     im = Image.open(glob.glob(U + i + '*')[0]).convert('RGBA'); return im.crop(im.getbbox())
 A = {'c63': up('4c203a47'), 'c63side': up('75d10af9'), 'hood': up('40dc07b0'), 'engine': up('a38b4219'),
      'intake': up('c4dcbd72'), 'exhaust': up('f2376737'), 'ecu': up('4245a9e9'), 'headers': up('6c902933'),
-     'front': up('cb7315f1'), 'front2': up('819561e1'), 'side': up('20e6f288'), 'rear': up('2d2bf1fa')}
+     'front': up('cb7315f1'), 'front2': up('819561e1'), 'side': up('20e6f288')}
+CARS = {'c63', 'hood', 'front', 'front2', 'side'}
+MODS = {'intake', 'headers', 'exhaust', 'ecu'}
 
 F_CAP = ImageFont.truetype(S + '/fonts2/package/800ExtraBold/Montserrat_800ExtraBold.ttf', 96)
 BLACK = S + '/fonts2/package/900Black/Montserrat_900Black.ttf'
@@ -44,10 +69,10 @@ MAN = [
     (27.32, 'C', 'hips', 'U', 'up'), (29.54, 'L', 'hips', 'U', 'up'), (33.12, 'R', 'hips', 'U', 'N'),
     (36.70, 'L', 'hips', 'U', 'one'), (41.04, 'R', 'hips', 'U', 'up'), (45.20, 'BIG', 'hips', 'C', 'up'),
     (46.90, 'BIG', 'hips', 'C', 'frown'), (48.64, 'C', 'hips', 'C', 'frown'),
-    (51.90, 'CORNER', 'hips', 'C', 'N'),
+    (51.90, 'R', L_, 'L', 'up'),
     (57.00, 'C', 'hips', 'C', 'one'), (59.00, 'L', 'hips', 'R', 'N'), (61.38, 'C', 'hips', 'C', 'up'),
     (62.76, 'BIG', 'hips', 'C', 'one'), (64.56, 'BIG', 'hips', 'L', 'one'), (66.24, 'C', 'hips', 'C', 'up'),
-    (67.54, 'CORNER', 'hips', 'C', 'N'),
+    (67.54, 'C', 'hips', 'C', 'one'),
     (70.54, 'R', L_, 'L', 'N'), (73.46, 'R', L_, 'L', 'up'), (75.16, 'C', 'hips', 'C', 'up'),
 ]
 
@@ -55,14 +80,16 @@ MAN = [
 def I(k, cx, cy, mw, mh, t0): return ('img', k, cx, cy, mw, mh, t0)
 def X(s, cx, cy, size, col, t0): return ('txt', s, cx, cy, size, col, t0)
 def V(n, src_start, src_len, t0, t1): return ('clip', n, src_start, src_len, t0, t1)
+def Y(s, cx, cy, size, col, t0): return ('type', s, cx, cy, size, col, t0)
+TYPE_CPS = 0.05     # seconds per typed character
 
 BEATS = [
     (0.00, [I('c63', 540, 560, 1000, 700, 0.00), X('AMG', 540, 130, 140, RED, 1.78)]),
     (2.80, [I('front', 540, 560, 1000, 700, 2.80)]),
     (CUT, [V(3, 0.0, GAP, CUT, CUT)]),                       # silent break, clip with its own sound
-    (5.78, [I('side', 540, 640, 1020, 520, 5.78), X('2008-2014', 540, 140, 130, RED, 6.66),
-            X('MERCEDES C300', 540, 270, 90, RED, 8.26), X('W204', 540, 380, 90, RED, 10.20)]),
-    (11.88, [I('rear', 540, 560, 960, 600, 11.88), X('NO MODERN PRICES', 540, 140, 80, GRN, 13.36)]),
+    (5.78, [I('side', 540, 640, 1020, 520, 5.78), Y('2008-2014', 540, 140, 130, RED, 6.66),
+            Y('MERCEDES C300', 540, 270, 90, RED, 8.26), Y('W204', 540, 380, 90, RED, 10.20)]),
+    (11.88, [I('side', 540, 600, 1020, 520, 11.88), X('NO MODERN PRICES', 540, 140, 80, GRN, 13.36)]),
     (15.06, [I('hood', 540, 560, 1000, 700, 15.06), X('NATURALLY ASPIRATED', 540, 130, 70, BLU, 16.28)]),
     (17.50, [I('engine', 540, 580, 900, 640, 17.50), X('V6', 540, 130, 140, BLU, 17.50),
              X('3.0L', 540, 130, 140, BLU, 19.42), X('3.0L  /  3.5L', 540, 130, 120, BLU, 21.74)]),
@@ -76,13 +103,16 @@ BEATS = [
              I('headers', 405, 520, 250, 200, 45.20), I('exhaust', 675, 520, 250, 200, 45.20),
              I('ecu', 935, 520, 250, 200, 45.20)]),
     (46.90, [X('NO TURBO', 540, 560, 170, RED, 47.56)]),
-    (51.90, [V(1, 0.0, 3.46, 51.90, 57.00)]),
+    (51.90, [I('front', 540, 560, 1000, 700, 51.90)]),
     (57.00, []),
-    (62.76, [I('rear', 540, 560, 960, 600, 62.76), X('NO AMG BADGE', 540, 140, 90, RED, 63.56)]),
-    (67.54, [V(2, 1.5, 2.4, 67.54, 70.54)]),
+    (62.76, [I('front', 540, 600, 1000, 640, 62.76), X('NO AMG BADGE', 540, 140, 90, RED, 63.56)]),
+    (67.54, [I('side', 540, 600, 1020, 520, 67.54)]),
     (70.54, [I('front2', 540, 560, 1000, 700, 70.54), X('W204 C300', 540, 130, 120, RED, 71.92)]),
     (73.46, [I('c63', 540, 560, 1000, 700, 73.46), X('C63 AMG', 540, 130, 120, RED, 74.54)]),
 ]
+# car shine (strobe) start times, original voice time: start, result, end
+SHINE = [2.95, 52.84, 71.92]
+SHINE_PAT = 'FFFWFFNFFWFFNFFWN'
 
 def current(lst, tv):
     cur = lst[0]
@@ -124,39 +154,63 @@ class Stream:
         return self.last
 _streams = {}
 
+_white = {}
+def shine_state(t):
+    for s in SHINE:
+        k = int((t - T(s)) * FPS)
+        if 0 <= k < len(SHINE_PAT): return SHINE_PAT[k]
+    return 'N'
+
+def shined(im, st):
+    if st == 'N': return im
+    key = (id(im), st)
+    if key not in _white:
+        a = np.array(im).astype(np.float32)
+        if st == 'W': a[..., :3] = 228
+        else:
+            a[..., :3] = a[..., :3] * 0.35 + 255 * 0.65; a[..., 3] *= 0.8
+        _white[key] = Image.fromarray(a.astype(np.uint8))
+    return _white[key]
+
 def draw_items(fr, t):
-    tv = t if t < CUT else (t - GAP if t >= CUT + GAP else CUT)
-    if CUT <= t < CUT + GAP: tv = CUT
+    tv = V2O(t)
     _, items = current(BEATS, tv)
     texts = {}
     for it in items:
         if it[0] == 'clip':
             _, n, s0, ln, a, b = it
-            t0, t1 = T(a), (T(b) if b > a else T(a) + GAP)
-            if a == CUT: t0, t1 = CUT, CUT + GAP
+            t0, t1 = CUT, CUT + GAP
             key = (n, s0, a)
             if key not in _streams: _streams[key] = Stream(n, s0, ln, t0, t1)
             f = _streams[key].frame(t)
             if f is not None: fr.paste(f, (0, 0))
+    st = shine_state(t)
     for it in items:
         if it[0] == 'img' and T(it[-1]) <= t:
             _, k, cx, cy, mw, mh, t0 = it
             im = fit(k, mw, mh); s = popk(t, T(t0))
+            if k in CARS: im = shined(im, st)
             if s != 1.0: im = im.resize((max(1, int(im.width * s)), max(1, int(im.height * s))))
             fr.alpha_composite(im, (int(cx - im.width / 2), int(cy - im.height / 2)))
-        if it[0] == 'txt' and T(it[-1]) <= t:
+        if it[0] in ('txt', 'type') and T(it[-1]) <= t:
             texts[(it[2], it[3])] = it
+    d = ImageDraw.Draw(fr)
     for it in texts.values():
-        _, s_, cx, cy, size, col, t0 = it
+        kind, s_, cx, cy, size, col, t0 = it
+        if kind == 'type':
+            n = min(len(s_), int((t - T(t0)) / TYPE_CPS) + 1)
+            full = fb(size).getlength(s_)
+            d.text((cx - full / 2, cy), s_[:n], font=fb(size), fill=col, anchor='lm', stroke_width=7, stroke_fill='black')
+            continue
         k = popk(t, T(t0))
-        ImageDraw.Draw(fr).text((cx, cy), s_, font=fb(max(8, int(size * k))), fill=col, anchor='mm',
-                                stroke_width=max(2, int(7 * k)), stroke_fill='black')
+        d.text((cx, cy), s_, font=fb(max(8, int(size * k))), fill=col, anchor='mm',
+               stroke_width=max(2, int(7 * k)), stroke_fill='black')
 
 POS = {'C': (540, 1900, 0.64), 'R': (800, 1900, 0.6), 'L': (280, 1900, 0.6), 'BIG': (540, 2560, 1.2),
        'CORNER': (930, 1915, 0.38)}
 _pc = {}
 def draw_man(fr, t):
-    tv = t if t < CUT else (t - GAP if t >= CUT + GAP else CUT + 0.1)
+    tv = V2O(t) if not (CUT <= t < CUT + GAP) else CUT + 0.1
     t0, pos, arm, eyes, brows = current(MAN, tv)
     cx, fy, s = POS[pos]
     blink = (t % 2.9) < 0.1
@@ -169,7 +223,7 @@ def draw_man(fr, t):
 words = json.load(open(S + '/c300/words.json'))
 def draw_caption(fr, t):
     if CUT <= t < CUT + GAP: return
-    tv = t if t < CUT else t - GAP
+    tv = V2O(t)
     cur = None
     for w in words:
         if w['s'] - 0.02 <= tv: cur = w
@@ -182,20 +236,42 @@ def frame(t):
     draw_items(fr, t); draw_man(fr, t); draw_caption(fr, t)
     return fr.convert('RGB')
 
+def load_sfx(pattern):
+    f = glob.glob(U + pattern)[0]
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', f, '-ac', '1', '-ar', '44100', '-f', 'f32le', '-'],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.float32).copy()
+
 def build_sfx(path):
-    sr = 44100; out = np.zeros(int(sr * (DUR + 1)), np.float32)
-    n = int(sr * 0.09); tt = np.arange(n) / sr
-    pop = (np.sin(2 * np.pi * (950 * tt - 3500 * tt ** 2)) * np.exp(-tt / 0.022)).astype(np.float32)
+    sr = 44100; out = np.zeros(int(sr * (DUR + 2)), np.float32)
+    car, typ, mod, shn = load_sfx('c4b828b8*'), load_sfx('f4f7d949*'), load_sfx('57e303dc*'), load_sfx('c8e8f8e3*')
+    def put(snd, t, g=1.0):
+        i = max(0, int(t * sr)); n = min(len(snd), len(out) - i); out[i:i + n] += snd[:n] * g
     seen = set()
     for _, items in BEATS:
         for it in items:
-            if it[0] == 'clip': continue
-            t0 = round(T(it[-1]), 2)
-            if t0 in seen: continue
-            seen.add(t0); i = int(t0 * sr); out[i:i + n] += pop[:len(out) - i] * 0.35
+            if it[0] == 'img':
+                k, t0 = it[1], round(T(it[-1]), 2)
+                if (k in CARS) and ('c', t0) not in seen:
+                    seen.add(('c', t0)); put(car, t0, 0.8)
+                if (k in MODS) and ('m', t0) not in seen:
+                    seen.add(('m', t0)); put(mod, t0 - 0.165, 0.7)      # hit sits 0.165 s into the file
+            if it[0] == 'type':
+                t0 = T(it[-1]); ln = len(it[1]) * TYPE_CPS + 0.08
+                seg = typ[:int(ln * sr)].copy(); f = min(len(seg), int(0.04 * sr)); seg[-f:] *= np.linspace(1, 0, f)
+                put(seg, t0, 1.6)
+    for s in SHINE: put(shn, T(s), 0.55)
     with wave.open(path, 'wb') as wf:
         wf.setnchannels(1); wf.setsampwidth(2); wf.setframerate(sr)
         wf.writeframes((np.clip(out, -1, 1) * 32767).astype(np.int16).tobytes())
+
+def build_voice(path):
+    keep, x = [], 0.0
+    for g0, g1 in CUTS: keep.append((x, g0)); x = g1
+    keep.append((x, VOICE_LEN))
+    parts = ''.join(f'[0:a]atrim={a:.3f}:{b:.3f},asetpts=PTS-STARTPTS[s{i}];' for i, (a, b) in enumerate(keep))
+    fc = parts + ''.join(f'[s{i}]' for i in range(len(keep))) + f'concat=n={len(keep)}:v=0:a=1[o]'
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', VOICE, '-filter_complex', fc, '-map', '[o]', path], check=True)
 
 if __name__ == '__main__':
     OUT = sys.argv[1]
@@ -203,7 +279,7 @@ if __name__ == '__main__':
         for tt in [float(x) for x in sys.argv[2].split(',')]:
             _streams.clear(); frame(tt).save(f'{S}/c300/p_{tt:05.2f}.jpg', quality=80)
         sys.exit()
-    build_sfx(S + '/c300/sfx.wav')
+    build_sfx(S + '/c300/sfx.wav'); build_voice(S + '/c300/voice_tight.wav')
     voice_fx = ('highpass=f=75,equalizer=f=250:t=q:w=1:g=-2,equalizer=f=3200:t=q:w=1.2:g=3.5,'
                 'acompressor=threshold=-22dB:ratio=3:attack=5:release=90:makeup=2,'
                 'loudnorm=I=-14:TP=-1.5:LRA=7,aresample=44100')
@@ -213,9 +289,9 @@ if __name__ == '__main__':
           f"afade=t=in:d=0.15,afade=t=out:st={GAP - 0.4}:d=0.4,aformat=channel_layouts=mono[cl];"
           f"[va]aformat=channel_layouts=mono[va2];[vb]aformat=channel_layouts=mono[vb2];"
           f"[va2][cl][vb2]concat=n=3:v=0:a=1[voice];[3:a]aformat=channel_layouts=mono[sfx];"
-          f"[voice][sfx]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95[a]")
+          f"[voice][sfx]amix=inputs=2:duration=longest:normalize=0,alimiter=limit=0.95[a]")
     p = subprocess.Popen(['ffmpeg', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}',
-                          '-r', str(FPS), '-i', '-', '-i', VOICE, '-i', CLIP[3], '-i', S + '/c300/sfx.wav',
+                          '-r', str(FPS), '-i', '-', '-i', S + '/c300/voice_tight.wav', '-i', CLIP[3], '-i', S + '/c300/sfx.wav',
                           '-filter_complex', fc, '-map', '0:v', '-map', '[a]', '-c:v', 'libx264', '-preset', 'medium',
                           '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-shortest',
                           '-movflags', '+faststart', OUT], stdin=subprocess.PIPE)
