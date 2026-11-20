@@ -14,10 +14,15 @@ CUT = 5.62          # end of the hook in the voiceover
 GAP = 5.0           # silent B-roll break inserted after the hook
 _W = json.load(open(S + '/c300/words.json'))
 # pauses between sentences longer than 0.25 s are shortened: keep 0.08 s after a word, 0.06 s before the next
-CUTS = []
-for a, b in zip(_W, _W[1:]):
-    if b['s'] - a['e'] > 0.25:
-        CUTS.append((a['e'] + 0.08, b['s'] - 0.06))
+def _silences(path, thr=-40, mind=0.35):
+    err = subprocess.run(['ffmpeg', '-i', path, '-af', f'silencedetect=n={thr}dB:d={mind}', '-f', 'null', '-'],
+                         capture_output=True, text=True).stderr
+    import re
+    st = [float(x) for x in re.findall(r'silence_start: ([0-9.]+)', err)]
+    en = [float(x) for x in re.findall(r'silence_end: ([0-9.]+)', err)]
+    return list(zip(st, en))
+# only real silences are shortened, each down to 0.2 s (0.1 s kept on both sides)
+CUTS = [(a + 0.1, b - 0.1) for a, b in _silences(VOICE) if b - a > 0.3 and a > 0.5 and b < 75.5]
 def M(x):           # original voice time -> tightened voice time
     d = 0.0
     for g0, g1 in CUTS:
@@ -45,7 +50,7 @@ def up(i):
 A = {'c63': up('4c203a47'), 'c63side': up('75d10af9'), 'hood': up('40dc07b0'), 'engine': up('a38b4219'),
      'intake': up('c4dcbd72'), 'exhaust': up('f2376737'), 'ecu': up('4245a9e9'), 'headers': up('6c902933'),
      'front': up('cb7315f1'), 'front2': up('819561e1'), 'side': up('20e6f288')}
-CARS = {'c63', 'hood', 'front', 'front2', 'side'}
+CARS = {'hood', 'front', 'front2', 'side'}
 MODS = {'intake', 'headers', 'exhaust', 'ecu'}
 
 F_CAP = ImageFont.truetype(S + '/fonts2/package/800ExtraBold/Montserrat_800ExtraBold.ttf', 96)
@@ -84,8 +89,7 @@ def Y(s, cx, cy, size, col, t0): return ('type', s, cx, cy, size, col, t0)
 TYPE_CPS = 0.05     # seconds per typed character
 
 BEATS = [
-    (0.00, [I('c63', 540, 560, 1000, 700, 0.00), X('AMG', 540, 130, 140, RED, 1.78)]),
-    (2.80, [I('front', 540, 560, 1000, 700, 2.80)]),
+    (0.00, [I('front', 540, 560, 1000, 700, 0.00)]),
     (CUT, [V(3, 0.0, GAP, CUT, CUT)]),                       # silent break, clip with its own sound
     (5.78, [I('side', 540, 640, 1020, 520, 5.78), Y('2008-2014', 540, 140, 130, RED, 6.66),
             Y('MERCEDES C300', 540, 270, 90, RED, 8.26), Y('W204', 540, 380, 90, RED, 10.20)]),
@@ -108,10 +112,9 @@ BEATS = [
     (62.76, [I('front', 540, 600, 1000, 640, 62.76), X('NO AMG BADGE', 540, 140, 90, RED, 63.56)]),
     (67.54, [I('side', 540, 600, 1020, 520, 67.54)]),
     (70.54, [I('front2', 540, 560, 1000, 700, 70.54), X('W204 C300', 540, 130, 120, RED, 71.92)]),
-    (73.46, [I('c63', 540, 560, 1000, 700, 73.46), X('C63 AMG', 540, 130, 120, RED, 74.54)]),
 ]
 # car shine (strobe) start times, original voice time: start, result, end
-SHINE = [2.95, 52.84, 71.92]
+SHINE = [2.80, 52.84, 71.92]
 SHINE_PAT = 'FFFWFFNFFWFFNFFWN'
 
 def current(lst, tv):
@@ -256,6 +259,10 @@ def build_sfx(path):
                     seen.add(('c', t0)); put(car, t0, 0.8)
                 if (k in MODS) and ('m', t0) not in seen:
                     seen.add(('m', t0)); put(mod, t0 - 0.165, 0.7)      # hit sits 0.165 s into the file
+            if it[0] == 'txt' and it[5] == BLU:
+                t0 = round(T(it[-1]), 2)
+                if ('m', t0) not in seen:
+                    seen.add(('m', t0)); put(mod, t0 - 0.165, 0.7)
             if it[0] == 'type':
                 t0 = T(it[-1]); ln = len(it[1]) * TYPE_CPS + 0.08
                 seg = typ[:int(ln * sr)].copy(); f = min(len(seg), int(0.04 * sr)); seg[-f:] *= np.linspace(1, 0, f)
@@ -269,7 +276,8 @@ def build_voice(path):
     keep, x = [], 0.0
     for g0, g1 in CUTS: keep.append((x, g0)); x = g1
     keep.append((x, VOICE_LEN))
-    parts = ''.join(f'[0:a]atrim={a:.3f}:{b:.3f},asetpts=PTS-STARTPTS[s{i}];' for i, (a, b) in enumerate(keep))
+    parts = ''.join(f'[0:a]atrim={a:.3f}:{b:.3f},asetpts=PTS-STARTPTS,afade=t=in:d=0.012,'
+                    f'afade=t=out:st={b - a - 0.012:.3f}:d=0.012[s{i}];' for i, (a, b) in enumerate(keep))
     fc = parts + ''.join(f'[s{i}]' for i in range(len(keep))) + f'concat=n={len(keep)}:v=0:a=1[o]'
     subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', VOICE, '-filter_complex', fc, '-map', '[o]', path], check=True)
 
