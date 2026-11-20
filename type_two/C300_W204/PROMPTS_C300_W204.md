@@ -8,9 +8,11 @@
 ---
 
 ## 0. برومت البداية (أرسله أولًا)
+أرفق معه صورة من صور الـ R34 السابقة (مثلًا الـ GT-R الزرقاء الجانبية أو المحرك RB25) كمرجع للستايل.
 ```
-For all images in this chat: photorealistic studio product render, sharp clean details, soft even studio lighting, isolated on a transparent background (PNG), no text, no watermark, no ground shadow, no background. Keep the SAME car (2012 Mercedes-Benz C300 W204 sedan, obsidian black, stock chrome grille with the star, stock 17-inch silver wheels) identical in every image. Reply "ready".
+Use the attached image as the STYLE reference for all images in this chat: same hyper-realistic glossy 3D render look, same studio lighting with soft highlights and deep glossy reflections on the paint, same sharpness and color richness. Every image must be isolated on a transparent background (PNG), no text, no watermark, no ground shadow, no background. Keep the SAME car (2012 Mercedes-Benz C300 W204 sedan, obsidian black, stock chrome grille with the star, stock 17-inch silver wheels) identical in every image. Reply "ready".
 ```
+> لصور المحرك والقطع: أرفق صورة المحرك RB25 أو الإنتركولر من صور الـ R34 كمرجع للستايل نفسه.
 
 ---
 
