@@ -147,24 +147,33 @@ The silver C63 AMG W204 and the black C300 W204 side by side, front three-quarte
 ---
 
 ## و. مقاطع فيديو (B-roll)
-بأداة فيديو مثل Sora أو Kling أو Runway. كل مقطع من 3 إلى 5 ثوانٍ، بمقاس **9:16**.
+بأداة فيديو مثل Sora أو Kling أو Runway، بمقاس **9:16**.
 
-**V1** (بعد الخطّاف)
+| المقطع | المدة في الفيديو | ولّده بمدة | يغطي |
+|---|---|---|---|
+| V1 | 5 ث | 6 ث | فاصل بلا كلام بعد الخطّاف |
+| V2 | 7 ث | 8 ث | "What you get is a sharper… comfort of a Mercedes." |
+| V3 | 5 ث | 6 ث | "…the smooth ride… easy to underestimate." |
+| V4 | 5 ث | 6 ث | "A clean German sleeper… to get noticed." |
+
+> ولّد كل مقطع بثانية زيادة لأقصّه على التوقيت الدقيق. المدة النهائية تتحدد من التعليق الصوتي.
+
+**V1** (بعد الخطّاف، 6 ثوانٍ)
 ```
 Vertical 9:16 video, a black 2012 Mercedes C300 W204 sedan revving on a dyno in a garage, exhaust popping, cinematic lighting.
 ```
 
-**V2** (يظهر عند: sharper, louder)
+**V2** (يظهر عند: What you get، 8 ثوانٍ)
 ```
 Vertical 9:16 video, black Mercedes C300 W204 accelerating on an empty highway at sunset, rear tracking shot.
 ```
 
-**V3** (يظهر عند: smooth ride)
+**V3** (يظهر عند: smooth ride، 6 ثوانٍ)
 ```
 Vertical 9:16 video, interior POV driving a Mercedes C300 W204 at night through the city, hands on the steering wheel.
 ```
 
-**V4** (يظهر عند: doesn't need to scream)
+**V4** (يظهر عند: A clean German sleeper، 6 ثوانٍ)
 ```
 Vertical 9:16 video, black Mercedes C300 W204 slowly rolling past the camera at night under street lights, low angle.
 ```
