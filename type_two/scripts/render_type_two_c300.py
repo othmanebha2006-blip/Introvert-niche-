@@ -105,11 +105,11 @@ BEATS = [
     (17.50, [I('engine', 540, 580, 900, 640, 17.50), X('V6', 540, 130, 140, BLU, 17.50),
              X('3.0L', 540, 130, 140, BLU, 19.42), X('3.0L  /  3.5L', 540, 130, 120, BLU, 21.74)]),
     (23.28, [I('front2', 540, 470, 1000, 600, 23.28)]),
-    (27.32, [I('engine', 540, 540, 500, 320, 27.32),
-             I('intake', 335, 290, 330, 210, 29.54), X('INTAKE', 540, 110, 95, BLU, 29.54),
-             I('headers', 745, 290, 330, 210, 33.12), X('HEADERS', 540, 110, 95, BLU, 33.12),
-             I('exhaust', 335, 800, 330, 210, 36.70), X('CAT-BACK EXHAUST', 540, 110, 78, BLU, 36.70),
-             I('ecu', 745, 800, 330, 210, 41.04), X('ECU TUNE', 540, 110, 95, BLU, 41.04)]),
+    (27.32, [I('engine', 540, 545, 700, 450, 27.32),
+             I('intake', 335, 255, 330, 210, 29.54), X('INTAKE', 540, 110, 95, BLU, 29.54),
+             I('headers', 745, 255, 330, 210, 33.12), X('HEADERS', 540, 110, 95, BLU, 33.12),
+             I('exhaust', 335, 830, 330, 210, 36.70), X('CAT-BACK EXHAUST', 540, 110, 78, BLU, 36.70),
+             I('ecu', 745, 830, 330, 210, 41.04), X('ECU TUNE', 540, 110, 95, BLU, 41.04)]),
     (45.20, [X('4 MODS', 540, 200, 150, RED, 45.20), I('intake', 335, 470, 330, 210, 45.20),
              I('headers', 745, 470, 330, 210, 45.20), I('exhaust', 335, 730, 330, 210, 45.20),
              I('ecu', 745, 730, 330, 210, 45.20)]),
@@ -184,9 +184,8 @@ def shined(im, st):
 
 # dyno break: only the engine sound is used; the car shakes with it (pattern measured from the reference)
 DYNO_SRC = glob.glob(U + '486ebe9b*')[0]   # sound only
-SHAKE_DX = [0]*3 + [-1]*7 + [1]*5 + [0]*3 + [1]*7 + [-1]*5          # 30-frame cycle, units of amplitude
-SHAKE_DY = [0]*3 + [-1]*4 + [1]*5 + [-1]*3
-SHAKE_DY = SHAKE_DY + SHAKE_DY
+SHAKE_DX = [0, -1, -1, 1, 1, 0, 1, 1, -1, -1]          # 10-frame cycle (3 per second), units of amplitude
+SHAKE_DY = [0, -1, 1, 1, -1, 0, -1, 1, 1, -1]
 def _dyno_env():
     raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', DYNO_SRC, '-t', str(GAP), '-ac', '1', '-ar', '44100',
                           '-f', 'f32le', '-'], capture_output=True, check=True).stdout
@@ -202,8 +201,9 @@ def draw_dyno(fr, t):
     lg = fit('logo', 740, 740)
     fr.alpha_composite(lg, (int(540 - lg.width / 2), int(380 - lg.height / 2)))
     im = fit('frontS', 1000, 500)
-    ax, ay = 0.005 * im.width * e, 0.003 * im.width * e
-    dx, dy = SHAKE_DX[k % 30] * ax, SHAKE_DY[k % 30] * ay
+    g = 0.45 + 0.55 * min(e, 1.0)                          # always visible, stronger when the engine is loud
+    ax, ay = 0.014 * im.width * g, 0.009 * im.width * g
+    dx, dy = SHAKE_DX[k % 10] * ax, SHAKE_DY[k % 10] * ay
     fr.alpha_composite(im, (int(540 - im.width / 2 + dx), int(700 - im.height / 2 + dy)))
 
 def draw_items(fr, t):
