@@ -97,7 +97,7 @@ def Y(s, cx, cy, size, col, t0): return ('type', s, cx, cy, size, col, t0)
 TYPE_CPS = 0.05     # seconds per typed character
 
 BEATS = [
-    (0.00, [I('logo', 540, 300, 590, 590, 0.00), I('frontS', 540, 640, 1000, 500, 0.00)]),
+    (0.00, [I('logo', 540, 380, 740, 740, 0.00), I('frontS', 540, 700, 1000, 500, 0.00)]),
     (5.78, [I('side', 540, 640, 1020, 520, 5.78), Y('2008-2014', 540, 140, 130, RED, 6.66),
             Y('MERCEDES C300', 540, 270, 90, RED, 8.26), Y('W204', 540, 380, 90, RED, 10.20)]),
     (11.88, [I('side', 540, 600, 1020, 520, 11.88), X('NO MODERN PRICES', 540, 140, 80, GRN, 13.36)]),
@@ -118,7 +118,7 @@ BEATS = [
     (57.00, [I('front2', 540, 560, 1000, 700, 57.00)]),
     (62.76, [I('front', 540, 600, 1000, 640, 62.76), X('NO AMG BADGE', 540, 140, 90, RED, 63.56)]),
     (67.54, [I('side', 540, 600, 1020, 520, 67.54)]),
-    (70.54, [I('logo', 540, 300, 590, 590, 70.54), I('frontS', 540, 640, 1000, 500, 70.54)]),
+    (70.54, [I('logo', 540, 380, 740, 740, 70.54), I('frontS', 540, 700, 1000, 500, 70.54)]),
 ]
 # car shine (strobe) start times, original voice time: start, result, end
 SHINE = [2.80, 52.84, 71.92]
@@ -199,12 +199,12 @@ DYNO_ENV = _dyno_env()
 def draw_dyno(fr, t):
     k = int((t - CUT) * FPS)
     e = DYNO_ENV[min(k, len(DYNO_ENV) - 1)]
-    lg = fit('logo', 590, 590)
-    fr.alpha_composite(lg, (int(540 - lg.width / 2), int(300 - lg.height / 2)))
+    lg = fit('logo', 740, 740)
+    fr.alpha_composite(lg, (int(540 - lg.width / 2), int(380 - lg.height / 2)))
     im = fit('frontS', 1000, 500)
     ax, ay = 0.005 * im.width * e, 0.003 * im.width * e
     dx, dy = SHAKE_DX[k % 30] * ax, SHAKE_DY[k % 30] * ay
-    fr.alpha_composite(im, (int(540 - im.width / 2 + dx), int(640 - im.height / 2 + dy)))
+    fr.alpha_composite(im, (int(540 - im.width / 2 + dx), int(700 - im.height / 2 + dy)))
 
 def draw_items(fr, t):
     if CUT <= t < CUT + GAP:
