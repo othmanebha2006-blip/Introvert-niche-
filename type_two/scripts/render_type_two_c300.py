@@ -1,8 +1,12 @@
-"""TYPE TWO renderer: Mercedes C300 W204."""
+"""TYPE TWO renderer — reference build: Mercedes C300 W204.
+For a new car: copy this file, set VOICE, the image table A (+ CARS / MODS), MAN (narrator timeline),
+BEATS (elements on their words), SHINE times, the typed foundation lines (Y items) and the dyno sound.
+Rules: ../TYPE_TWO_RULES.md
+"""
 import json, glob, subprocess, sys, wave
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-sys.path.insert(0, '/home/user/Introvert-niche-/type_one/scripts')
+sys.path.insert(0, __import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), '..', '..', 'type_one', 'scripts'))
 import narrator
 
 S = '/tmp/claude-0/-home-user-Introvert-niche-/4b8ae4f4-60f4-56d8-b6fb-0b7196bc6596/scratchpad'
@@ -54,8 +58,10 @@ A = {'c63': up('4c203a47'), 'c63side': up('75d10af9'), 'hood': up('40dc07b0'), '
 CARS = {'hood', 'front', 'front2', 'side'}
 MODS = {'intake', 'headers', 'exhaust', 'ecu'}
 
-F_CAP = ImageFont.truetype(S + '/fonts2/package/800ExtraBold/Montserrat_800ExtraBold.ttf', 96)
-BLACK = S + '/fonts2/package/900Black/Montserrat_900Black.ttf'
+import os
+REPO2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+F_CAP = ImageFont.truetype(os.path.join(REPO2, 'fonts', 'Montserrat_800ExtraBold.ttf'), 96)
+BLACK = os.path.join(REPO2, 'fonts', 'Montserrat_900Black.ttf')
 _f = {}
 def fb(s):
     if s not in _f: _f[s] = ImageFont.truetype(BLACK, s)
