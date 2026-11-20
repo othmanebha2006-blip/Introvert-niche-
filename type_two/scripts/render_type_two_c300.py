@@ -54,8 +54,9 @@ def up(i):
     im = Image.open(glob.glob(U + i + '*')[0]).convert('RGBA'); return im.crop(im.getbbox())
 A = {'c63': up('4c203a47'), 'c63side': up('75d10af9'), 'hood': up('40dc07b0'), 'engine': up('a38b4219'),
      'intake': up('c4dcbd72'), 'exhaust': up('f2376737'), 'ecu': up('4245a9e9'), 'headers': up('6c902933'),
-     'front': up('cb7315f1'), 'front2': up('819561e1'), 'side': up('20e6f288')}
-CARS = {'hood', 'front', 'front2', 'side'}
+     'front': up('cb7315f1'), 'front2': up('819561e1'), 'side': up('20e6f288'),
+     'frontS': Image.open(S + '/a/c300_front_shadow.png').convert('RGBA'), 'logo': up('fdbc88f7')}
+CARS = {'frontS', 'hood', 'front', 'front2', 'side'}
 MODS = {'intake', 'headers', 'exhaust', 'ecu'}
 
 import os
@@ -96,7 +97,7 @@ def Y(s, cx, cy, size, col, t0): return ('type', s, cx, cy, size, col, t0)
 TYPE_CPS = 0.05     # seconds per typed character
 
 BEATS = [
-    (0.00, [I('front', 540, 560, 1000, 700, 0.00)]),
+    (0.00, [I('logo', 540, 300, 590, 590, 0.00), I('frontS', 540, 640, 1000, 500, 0.00)]),
     (5.78, [I('side', 540, 640, 1020, 520, 5.78), Y('2008-2014', 540, 140, 130, RED, 6.66),
             Y('MERCEDES C300', 540, 270, 90, RED, 8.26), Y('W204', 540, 380, 90, RED, 10.20)]),
     (11.88, [I('side', 540, 600, 1020, 520, 11.88), X('NO MODERN PRICES', 540, 140, 80, GRN, 13.36)]),
@@ -117,7 +118,7 @@ BEATS = [
     (57.00, [I('front2', 540, 560, 1000, 700, 57.00)]),
     (62.76, [I('front', 540, 600, 1000, 640, 62.76), X('NO AMG BADGE', 540, 140, 90, RED, 63.56)]),
     (67.54, [I('side', 540, 600, 1020, 520, 67.54)]),
-    (70.54, [I('front2', 540, 560, 1000, 700, 70.54), X('W204 C300', 540, 130, 120, RED, 71.92)]),
+    (70.54, [I('logo', 540, 300, 590, 590, 70.54), I('frontS', 540, 640, 1000, 500, 70.54)]),
 ]
 # car shine (strobe) start times, original voice time: start, result, end
 SHINE = [2.80, 52.84, 71.92]
@@ -198,10 +199,12 @@ DYNO_ENV = _dyno_env()
 def draw_dyno(fr, t):
     k = int((t - CUT) * FPS)
     e = DYNO_ENV[min(k, len(DYNO_ENV) - 1)]
-    im = fit('front', 1000, 700)
+    lg = fit('logo', 590, 590)
+    fr.alpha_composite(lg, (int(540 - lg.width / 2), int(300 - lg.height / 2)))
+    im = fit('frontS', 1000, 500)
     ax, ay = 0.005 * im.width * e, 0.003 * im.width * e
     dx, dy = SHAKE_DX[k % 30] * ax, SHAKE_DY[k % 30] * ay
-    fr.alpha_composite(im, (int(540 - im.width / 2 + dx), int(560 - im.height / 2 + dy)))
+    fr.alpha_composite(im, (int(540 - im.width / 2 + dx), int(640 - im.height / 2 + dy)))
 
 def draw_items(fr, t):
     if CUT <= t < CUT + GAP:
