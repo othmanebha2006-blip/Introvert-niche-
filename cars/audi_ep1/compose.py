@@ -8,14 +8,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "lib"))
 from ink import *
 from car import draw_car, WHEELS
-from character import draw_presenter, lerp_pose
+from mecmation import draw_mecmation, lerp_pose
 from widgets import *
 import widgets
 
 W, H, FPS = 1080, 1920, 30
 SERIES = "BADGE DECODED · #1"
 BRAND = "AUDI"
-HANDLE = os.environ.get("HANDLE", "@yourchannel")
+HANDLE = os.environ.get("HANDLE", "@Mecmation")
 END_CARD = 2.0
 
 # ---------------------------------------------------------------- timing
@@ -385,7 +385,7 @@ def scene8(ctx, lt):
             r = ease_out((lt - wt(b, "boot")) / 0.4)
             ctx.new_sub_path(); ctx.arc(bx, by, 125, 0, 2 * math.pi * r); ctx.set_source_rgba(*YELLOW); ctx.set_line_width(10); ctx.stroke()
         ctx.restore()
-        pop(ctx, lt, wt(b, "engine"), W / 2, 900, lambda c: (tag(c, "4.5 LITRE ENGINE?", "white", 50, -0.03), cross(c, 0, 0, 60)))
+        pop(ctx, lt, wt(b, "engine"), W / 2, 335, lambda c: (tag(c, "4.5 LITRE ENGINE?", "white", 50, -0.03), cross(c, 0, 0, 60)))
         ctx.pop_group_to_source(); ctx.paint_with_alpha(a)
     else:
         bands = [("30", 0.30, "120"), ("35", 0.40, "150"), ("40", 0.52, "200"), ("45", 0.64, "245"), ("50", 0.78, "290"), ("55", 0.92, "340")]
@@ -493,27 +493,62 @@ def end_card(ctx, t):
 
 
 # ---------------------------------------------------------------- presenter state
+HOPS = {0, 12, 22, 32}        # sentences that start with a little jump
+
+
 def presenter_state(t, f):
     si = 0
     for i, s in enumerate(SENT):
         if t >= s["start"] - 0.15: si = i
     pose_now, brow = DIRECT[si]
     pose_prev = DIRECT[si - 1][0] if si > 0 else "rest"
-    tp = ease((t - (SENT[si]["start"] - 0.15)) / 0.3) if t >= SENT[0]["start"] - 0.15 else 1
+    t_s = SENT[si]["start"] - 0.15
+    tp = ease((t - t_s) / 0.3) if t >= SENT[0]["start"] - 0.15 else 1
     if t < SENT[0]["start"] - 0.15:
         pose_now, pose_prev, brow = "rest", "rest", "neutral"
+    wave = 0.0
     if t > VO_END + 0.3:
-        pose_prev, pose_now = DIRECT[-1][0], "thumb"
+        pose_prev, pose_now, brow = DIRECT[-1][0], "wave", "up"
+        tp = ease((t - VO_END - 0.3) / 0.3)
+        wave = 0.35 * math.sin((t - VO_END) * 11)
     mouth = float(ENV[min(f, len(ENV) - 1)])
     shape = ["ah", "ee", "ah", "oh"][(f // 3 + si) % 4]
-    # blinks: every ~3.1 s, plus a slight wander of the eyes
     ph = (t + 0.7) % 3.1
     blink = 1.0 if ph < 0.1 else (0.5 if ph < 0.14 else 0)
-    look = (0.25 * math.sin(t * 0.7), -0.55) if pose_now == "point" else (0.2 * math.sin(t * 0.9), -0.15)
-    bob = 4 * math.sin(t * 2.2)
-    tilt = 0.03 * math.sin(t * 1.3) + 0.02 * mouth * math.sin(t * 7)
-    return dict(x=540, y=1335 + bob, mouth=mouth, shape=shape, blink=blink, brows=brow, look=look,
-                pose=lerp_pose(pose_prev, pose_now, tp), tilt=tilt, smile=0.35 if brow == "smug" else 0.15)
+    if pose_now == "point":
+        look = (-0.35, -0.75)
+    elif pose_now in ("explain", "thumb", "wave"):
+        look = (0.0, 0.0)
+    else:
+        look = (0.3 * math.sin(t * 0.9), -0.2)
+    # body: breathing, talk bounce, weight shift, lean into gestures
+    bob = 6 * math.sin(t * 2.4) + 12 * mouth
+    squash = 1.0 - 0.012 * mouth
+    lean_pose = {"point": -0.045, "shrug": 0.0, "thumb": 0.03, "hips": 0.02, "explain": -0.015, "count": 0.0,
+                 "rest": 0.0, "wave": 0.03}
+    lean = 0.022 * math.sin(t * 0.9) + lean_pose[pose_prev] * (1 - tp) + lean_pose[pose_now] * tp
+    tilt = 0.035 * math.sin(t * 1.3) + 0.035 * mouth * math.sin(t * 8.5)
+    if brow == "skeptic":
+        tilt += 0.08
+    elif brow == "frown":
+        tilt -= 0.05
+    # gesture overshoot: a small extra bounce when the pose changes
+    if 0 < t - t_s < 0.45:
+        bob += 14 * math.sin((t - t_s) / 0.45 * math.pi)
+    hop = 0.0
+    if si in HOPS:
+        k = t - t_s
+        if 0 <= k < 0.12:
+            squash *= 1 - 0.07 * math.sin(k / 0.12 * math.pi / 2)
+        elif 0.12 <= k < 0.52:
+            q = (k - 0.12) / 0.4
+            hop = 70 * 4 * q * (1 - q)
+            squash *= 1 + 0.04 * math.sin(q * math.pi)
+        elif 0.52 <= k < 0.66:
+            squash *= 1 - 0.06 * math.sin((k - 0.52) / 0.14 * math.pi)
+    return dict(x=540, ground=1912, s=0.6, mouth=mouth, shape=shape, blink=blink, brows=brow, look=look,
+                pose=lerp_pose(pose_prev, pose_now, tp), lean=lean, tilt=tilt, bob=bob, squash=squash, hop=hop,
+                smile=0.8 if brow == "smug" else 0.5, wave=wave)
 
 
 def caption_now(t):
@@ -558,8 +593,8 @@ def render(f, surf):
         end_card(ctx, te)
     word, age, key = caption_now(t)
     if word:
-        caption(ctx, word, W / 2, 1000, age, key)
-    draw_presenter(ctx, presenter_state(t, f))
+        caption(ctx, word, W / 2, 978, age, key)
+    draw_mecmation(ctx, presenter_state(t, f))
 
 
 # ---------------------------------------------------------------- sound effects

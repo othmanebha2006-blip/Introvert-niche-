@@ -9,6 +9,6 @@
 - **BADGE DECODED / TYPE THREE** (car badge & model names explained, the Audi episode style): when the user asks for a
   "badge decoded" / "type three" / "type 3" video, or another video "like the Audi one", follow `cars/BADGE_DECODED_RULES.md` exactly.
   These rules are locked: do not change them unless the user explicitly asks.
-  Reference result: `videos/cars_ep1_audi_badges.mp4` (code: `cars/audi_ep1/`, shared drawing code: `cars/lib/`).
-  Key rules: everything drawn in code as vectors (no logos of real brands), the channel's own beanie/glasses/teal-hoodie presenter,
+  Reference result: `videos/cars_ep1_audi_badges_mecmation.mp4` (code: `cars/audi_ep1/`, shared drawing code: `cars/lib/`).
+  Key rules: everything drawn in code as vectors (no logos of real brands), the channel's presenter @Mecmation (vector redraw of the user's character, `cars/lib/mecmation.py`, fully animated),
   one big word caption at a time (yellow for keywords), badges and cars appear exactly on their spoken word, Kokoro voice bm_george at 1.22.
