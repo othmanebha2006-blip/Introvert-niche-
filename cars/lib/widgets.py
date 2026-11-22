@@ -113,7 +113,7 @@ def badge_row(ctx, cx, cy, parts, lt, size=64, gap=14):
     ink(ctx, fr, hexc("#FFFFFF", 0.85), 4)
     x = cx - total / 2
     for (t, s, ti), w in zip(vis, ws):
-        p = ease_out_back((lt - ti) / 0.32)
+        p = max(0.02, ease_out_back((lt - ti) / 0.32))
         sfx_once(lt, ti, "pop")
         ctx.save(); ctx.translate(x + w / 2, cy); ctx.scale(p, p)
         chip(ctx, 0, 0, t, s, size)
@@ -127,7 +127,7 @@ def pop(ctx, lt, t0, x, y, fn, dur=0.3, out=None, sound="pop"):
         return
     if sound:
         sfx_once(lt, t0, sound)
-    p = ease_out_back((lt - t0) / dur)
+    p = max(0.02, ease_out_back((lt - t0) / dur))
     a = 1.0
     if out is not None and lt > out:
         a = 1 - ease((lt - out) / 0.25)
@@ -173,7 +173,7 @@ def speed_lines(ctx, x, y, L, h, strength, seed=0):
 def caption(ctx, word, x, y, age, key=False):
     s = 1.0 + 0.18 * (1 - ease_out((age) / 0.14)) if age < 0.14 else 1.0
     s = min(s, 1.18)
-    p = ease_out_back(age / 0.16, 2.2) if age < 0.16 else 1.0
+    p = max(0.02, ease_out_back(age / 0.16, 2.2)) if age < 0.16 else 1.0
     size = 122 if len(word) <= 9 else int(122 * 9 / len(word)) + 10
     ctx.save(); ctx.translate(x, y); ctx.scale(p, p)
     fill = YELLOW if key else hexc("#FFFFFF")

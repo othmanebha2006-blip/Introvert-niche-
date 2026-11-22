@@ -33,7 +33,23 @@
   - pop عند ظهور شارة أو عنصر.
   - stamp للختم.
   - صوت محرك (rumble) في الجملة الأخيرة.
-- إذا أرسل المستخدم تعليقًا صوتيًا mp3 جاهزًا، نستخدمه بدل Kokoro.
+- **إذا أرسل المستخدم تعليقًا صوتيًا mp3 جاهزًا**، نستخدمه بدل Kokoro، بهذه الخطوات (مثال: `chevy_ep2/`):
+  1. **تقصير الوقفات:**
+     ```
+     python3 tools/tighten.py voice_original.mp3 words.json voice.wav
+     ```
+     كل صمت تحت −40dB وأطول من 0.12 ثانية يُقصَّر:
+     - إلى 0.07 ثانية داخل الجملة.
+     - إلى 0.15 ثانية بعد نهاية الجملة.
+     - مع crossfade مدته 8ms عند كل قص.
+  2. **توقيت كل كلمة:**
+     ```
+     python3 tools/transcribe.py voice.wav words.json <model>
+     ```
+     - التوقيت من faster-whisper small.
+     - النموذج من npm: الحزم `@skillninja/shortmovie-telop-model-p0..p3`، تُدمج أجزاء `model.bin.part0..3` في ملف `model.bin`.
+  3. **تصحيح الأسماء:** الأسماء التي يخطئ فيها Whisper تُصحَّح في `FIX` داخل `scenes.py`، مثل Sting-Rae → Stingray.
+  4. **المشاهد:** تقسيم الجمل على المشاهد في `BEAT_OF_SENT`.
 
 ## 3. الشكل العام
 - **المقاس والسرعة:** 1080×1920، بسرعة 30fps، والترميز H.264 بجودة CRF 15، مع صوت AAC بمعدل 192k.

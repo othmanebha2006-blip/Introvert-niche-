@@ -19,6 +19,12 @@ BODY = {
                 (0.725, 0.40, .05), (0.95, 0.36, .05), (1.0, 0.29, .03), (0.992, 0.105, .02)],
     "rally":   [(0.006, 0.07, .015), (0.0, 0.24, .02), (0.02, 0.30, .02), (0.26, 0.32, .02), (0.34, 0.47, .03),
                 (0.62, 0.475, .03), (0.745, 0.325, .03), (0.97, 0.29, .02), (1.0, 0.23, .02), (0.992, 0.075, .015)],
+    # mid-engine sports car: long rear deck, cab forward, short nose
+    "sports":  [(0.006, 0.07, .02), (0.0, 0.21, .03), (0.03, 0.30, .02), (0.30, 0.335, .05), (0.43, 0.44, .07),
+                (0.55, 0.445, .07), (0.70, 0.31, .05), (0.95, 0.25, .06), (1.0, 0.185, .03), (0.992, 0.07, .02)],
+    # pickup: bed at the back, tall cab, long hood
+    "pickup":  [(0.006, 0.11, .02), (0.0, 0.40, .015), (0.40, 0.40, .005), (0.405, 0.625, .02), (0.44, 0.665, .04),
+                (0.62, 0.668, .05), (0.70, 0.475, .03), (0.965, 0.448, .03), (1.0, 0.36, .02), (0.992, 0.11, .02)],
 }
 # glass: polygon, B-pillar x (None = no pillar), extra pillar x
 GLASS = {
@@ -28,13 +34,17 @@ GLASS = {
     "fastback": ([(0.15, 0.297), (0.36, 0.418), (0.56, 0.43), (0.705, 0.303)], 0.46, 0.28),
     "suv":     ([(0.055, 0.415), (0.105, 0.532), (0.555, 0.548), (0.695, 0.405)], 0.45, 0.19),
     "rally":   ([(0.30, 0.325), (0.355, 0.455), (0.61, 0.46), (0.715, 0.328)], 0.50, None),
+    "sports":  ([(0.40, 0.34), (0.445, 0.425), (0.55, 0.43), (0.68, 0.31)], None, None),
+    "pickup":  ([(0.43, 0.48), (0.455, 0.635), (0.61, 0.64), (0.685, 0.48)], 0.55, None),
 }
 WHEELS = {  # rear x, front x, radius (in car lengths)
     "sedan": (0.175, 0.81, 0.075), "hatch": (0.165, 0.815, 0.082), "avant": (0.175, 0.81, 0.075),
     "fastback": (0.175, 0.81, 0.075), "suv": (0.175, 0.805, 0.092), "rally": (0.17, 0.815, 0.07),
+    "sports": (0.17, 0.80, 0.072), "pickup": (0.165, 0.80, 0.088),
 }
 # vertical squash so height/length matches the real cars
-YS = {"sedan": 0.73, "hatch": 0.76, "avant": 0.74, "fastback": 0.72, "suv": 0.69, "rally": 0.72}
+YS = {"sedan": 0.73, "hatch": 0.76, "avant": 0.74, "fastback": 0.72, "suv": 0.69, "rally": 0.72, "sports": 0.6,
+      "pickup": 0.53}
 
 PAINT = {
     "tango_red": "#C61F2B", "ara_blue": "#1F3F86", "nardo": "#8E9396", "glacier": "#EDEDEA", "mythos": "#1D1E22",
@@ -114,12 +124,14 @@ def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, 
     ink(ctx, body, None, lw, salt=salt)
 
     # RS / S line: blistered arches + black side blade
+    ctx.save(); path(ctx, body); ctx.clip()
     for wx in (wr, wf):
         cx, cy = P(wx, R / ys)
         ar = R * L * (1.2 if rs else 1.14)
         a0, a1 = math.pi * 1.04, math.pi * 1.96
         flare = ellipse(cx, cy, ar + lw * (2.6 if rs else 1.2), ar + lw * (2.6 if rs else 1.2), 30, a0, a1)
         line(ctx, flare, lw * 0.9, salt=salt)
+    ctx.restore()
 
     # glass
     glass = rpoly([P(*p) for p in gl], [0.012 * L, 0.03 * L, 0.03 * L, 0.012 * L])
@@ -149,7 +161,7 @@ def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, 
 
     # door shut lines, handles, shoulder crease
     fx = gl[3][0] + 0.005
-    rx = gl[0][0] + (0.06 if kind in ("sedan", "fastback", "rally") else 0.11)
+    rx = gl[0][0] + (0.06 if kind in ("sedan", "fastback", "rally") else 0.005 if kind == "pickup" else 0.11)
     sill = 0.085 if kind != "suv" else 0.12
     dl = lw * 0.55
     if bp is not None and kind != "rally":
@@ -158,8 +170,13 @@ def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, 
     line(ctx, [P(fx, belt + 0.004), P(fx + 0.004, belt - 0.035), P(wf - R * 1.25, sill + 0.03)], dl, salt=salt)
     for hx in ([bp - 0.07, bp + 0.10] if bp else []):
         ink(ctx, rrect(*P(hx, belt - 0.03), 0.045 * L, 0.011 * L, 0.005 * L), shade(col, -0.25), dl, salt=salt)
-    crease_y = belt - 0.055
+    crease_y = belt - 0.055 if kind != "pickup" else 0.33
+    ctx.save(); path(ctx, body); ctx.clip()
     line(ctx, [P(0.03, crease_y + 0.01), P(0.5, crease_y), P(0.97, crease_y - 0.012)], dl, shade(col, -0.45) if paint != "mythos" else hexc("#55585E"), salt=salt)
+    if kind == "pickup":   # gap between cab and bed, bed rail
+        line(ctx, [P(0.408, 0.405), P(0.406, sill + 0.03)], dl * 1.4, salt=salt)
+        line(ctx, [P(0.01, 0.375), P(0.40, 0.375)], dl, shade(col, -0.35), salt=salt)
+    ctx.restore()
 
     # side blade / sill
     sill_c = hexc("#1D1E22") if (rs or sline or s_model) else shade(col, -0.3)
