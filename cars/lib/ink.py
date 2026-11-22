@@ -58,6 +58,8 @@ def rpoly(pts, r):
         if rr <= 0:
             out.append(p1); continue
         d1 = math.dist(p0, p1); d2 = math.dist(p1, p2)
+        if d1 < 1e-6 or d2 < 1e-6:
+            out.append(p1); continue
         a = min(rr, d1 / 2.05); b = min(rr, d2 / 2.05)
         s = (p1[0] + (p0[0] - p1[0]) * a / d1, p1[1] + (p0[1] - p1[1]) * a / d1)
         e = (p1[0] + (p2[0] - p1[0]) * b / d2, p1[1] + (p2[1] - p1[1]) * b / d2)
