@@ -26,7 +26,7 @@ class Scene:
         w = self.w
         # ---- camera: (start of move, move duration, lon, lat, width km, drift factor)
         shots = [
-            (0.0, 0.0, -76.9, 44.3, 860, 0.88),
+            (0.0, 0.0, -76.25, 44.3, 720, 0.9),
             (6.7, 1.6, -76.0, 44.1, 920, 0.95),
             (w("kingston", "1841") - 0.2, 1.6, -75.4, 44.3, 640, 0.93),
             (w("montreal", "Three"), 1.4, -75.0, 44.5, 580, 0.95),
@@ -129,7 +129,7 @@ class Scene:
                 d.glow_blob(x, y, 150 + 18 * math.sin(T * 3), "#ffc85a", a * 0.9)
                 d.dot(x, y, a, r=9, color="#ffd27a")
                 d.icon("cityscape", x, y - 95, 150, a, bob=3)
-                d.label(name, x + (60 if name == "Montreal" else 0), y + 78, a, size=50, kind="sans_b", color="#ffffff", halo="#0c2236")
+                d.label(name, x + (0 if name == "Montreal" else 20), y + 112, a, size=50, kind="sans_b", color="#ffffff", halo="#0c2236")
             ox, oy = self.P(d, "Ottawa"); a = win(T, w("hook", "Ottawa") - 0.15, hook_end, 0.4, 0.6)
             t_n = w("hook", "next")
             for name, km in (("Toronto", "350 km"), ("Montreal", "165 km")):
@@ -142,7 +142,7 @@ class Scene:
                            halo="#0c2236", halo_a=0.9)
             d.dot(ox, oy, a, r=12, color=RED, pulse=T)
             d.icon("red_question_mark", ox + 6, oy - 110, 130, win(T, w("hook", "Why") + 0.2, hook_end, 0.45, 0.6), bob=5)
-            d.label("Ottawa", ox - 70, oy + 80, a, size=58, kind="sans_x", color="#ffffff", halo="#0c2236")
+            d.label("Ottawa", ox - 165, oy + 62, a, size=58, kind="sans_x", color="#ffffff", halo="#0c2236")
 
         # ===== UNDECIDED (rewind)
         t0, t1 = w("undecided", "For"), w("kingston", "1841") - 0.2
