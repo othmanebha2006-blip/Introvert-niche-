@@ -1,0 +1,19 @@
+[
+ {"id":"hook",    "text":"Why is Canada's capital Ottawa, and not Toronto or Montreal, the two giant cities right next to it?"},
+ {"id":"undecided","text":"For a long time, Canada couldn't decide."},
+ {"id":"kingston","text":"In 1841, the capital was Kingston."},
+ {"id":"montreal","text":"Three years later, it moved to Montreal."},
+ {"id":"riot",    "text":"Then, in 1849, an angry mob burned Montreal's parliament to the ground."},
+ {"id":"rotate",  "text":"So the government just started moving. Toronto, then Quebec City, then Toronto, then Quebec again. Every few years, the whole parliament packed its boxes and left."},
+ {"id":"split",   "text":"The problem was that Canada was really two places. English speakers in the west, French speakers in the east. And each side wanted the capital."},
+ {"id":"usa",     "text":"And there was a bigger problem. America."},
+ {"id":"york",    "text":"In the War of 1812, American troops had captured Toronto, then called York, and burned its parliament."},
+ {"id":"border",  "text":"Toronto, Kingston and Montreal all sat right on the border, or on the Saint Lawrence, a river an enemy fleet could sail straight up."},
+ {"id":"bytown",  "text":"But far up the Ottawa River, there was a small lumber town called Bytown."},
+ {"id":"canal",   "text":"After the war, the British cut the Rideau Canal through two hundred kilometers of forest, so troops could reach Kingston without passing American guns."},
+ {"id":"perfect", "text":"Bytown sat at the canal's northern end, hidden in the woods, and exactly on the river between English and French Canada."},
+ {"id":"queen",   "text":"It was renamed Ottawa, and in 1857 the choice went to Queen Victoria. She picked Ottawa."},
+ {"id":"critic",  "text":"Not everyone was impressed. One critic called it a sub-arctic lumber village, converted by royal mandate into a political cockpit."},
+ {"id":"today",   "text":"Today, Toronto has almost three million people. Montreal, almost two."},
+ {"id":"end",     "text":"Ottawa has about one. Which is exactly the point. It was chosen to be hard to reach."}
+]
