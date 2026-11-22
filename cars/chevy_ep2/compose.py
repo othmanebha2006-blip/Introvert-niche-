@@ -8,9 +8,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "lib"))
 from ink import *
 from car import draw_car, WHEELS
-from ref_presenter import RefPresenter
-# presenter = the user's own @Mecmation animation clip, keyed and looped seamlessly to the video length
-PRESENTER = RefPresenter(os.environ.get("MEC_CACHE", os.path.expanduser("~/.cache/mecmation_loop")))
+from clip_presenter import ClipPresenter
+# presenter = the clip the user animated for this voiceover (white background removed), frame-synced to voice.wav
+PRESENTER = ClipPresenter(os.path.join(HERE, "..", "character_mecmation", "chevrolet_presenter.mp4"),
+                          os.environ.get("CLIP_CACHE", os.path.expanduser("~/.cache/mecmation_chevrolet")))
 from widgets import *
 import widgets
 sys.path.insert(0, HERE)

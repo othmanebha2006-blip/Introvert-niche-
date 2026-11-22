@@ -1,4 +1,5 @@
-"""Episode 2: every Chevrolet model explained. Timing data + the 13 scenes (one per beat)."""
+"""Episode 2: every Chevrolet model explained. Timing data + the 13 scenes (one per beat).
+Voice = the audio of the user's presenter clip (character_mecmation/chevrolet_presenter.mp4); words.json = its Whisper timing."""
 import json, os, re, math
 from ink import *
 from car import draw_car, WHEELS
@@ -11,14 +12,14 @@ NEXT = "BADGE DECODED #3"
 
 # Whisper mishears a few names: fix the caption text, keep the timing
 FIX = {"Sting-Rae": "Stingray", "E-Rae": "E-Ray", "tracks": "Trax", "mid-sized": "mid-size", "2,500": "2500",
-       "3,500": "3500"}
+       "3,500": "3500", "Supersport": "Super Sport"}
 # sentence index -> beat
 BEAT_OF_SENT = [0, 1, 2, 2, 3, 3, 3, 4, 5, 5, 6, 7, 8, 8, 9, 9, 10, 11, 12]
 
 KEYWORDS = {"CHEVROLET", "CHEVY", "CARS", "SUVS", "TRUCKS", "ELECTRIC", "CORVETTE", "STINGRAY", "E-RAY", "HYBRID",
             "Z06", "ZR1", "TRACK", "POWER", "TRAX", "TRAILBLAZER", "EQUINOX", "BLAZER", "TRAVERSE", "TAHOE", "SUBURBAN",
             "LONGER", "COLORADO", "SILVERADO", "MID-SIZE", "FULL-SIZE", "HD", "HEAVY-DUTY", "TOWING", "HAULING",
-            "BADGES", "LT", "RS", "Z71", "OFF-ROAD", "ZR2", "SS", "SUPER", "SPORT", "PERFORMANCE", "EV", "FOLLOW",
+            "BADGES", "LT", "RS", "Z71", "OFF-ROAD", "ZR2", "SS", "SUPER", "SPORT", "SUPER SPORT", "PERFORMANCE", "EV", "FOLLOW",
             "FLAGSHIP", "SMALLEST", "SPORTS", "SPORTIER", "PICKUP", "CARGO", "PASSENGERS"}
 
 
@@ -266,7 +267,7 @@ def scene9(ctx, lt):          # RS sporty look; Z71 off-road; ZR2 more off-road
 
 def scene10(ctx, lt):         # SS = Super Sport, performance badge
     b = 10
-    badge_row(ctx, W / 2, BADGE_Y, [("SS", "red", 0.0), ("= SUPER SPORT", "white", wt(b, "Super"))], lt, 66)
+    badge_row(ctx, W / 2, BADGE_Y, [("SS", "red", 0.0), ("= SUPER SPORT", "white", wt(b, "Supersport"))], lt, 66)
     car_in(ctx, lt, 0.05, "fastback", 110, 850, 860, "#F2B800", s_model=True, rims="black")
     if lt > 0.7:
         speed_lines(ctx, 110, 850, 860, 280, 0.8, seed=int(lt * 6))
