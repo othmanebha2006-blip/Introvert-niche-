@@ -23,6 +23,13 @@ BODY = {
     "sports":  [(0.006, 0.07, .02), (0.0, 0.21, .03), (0.03, 0.30, .02), (0.30, 0.335, .05), (0.43, 0.44, .07),
                 (0.55, 0.445, .07), (0.70, 0.31, .05), (0.95, 0.25, .06), (1.0, 0.185, .03), (0.992, 0.07, .02)],
     # pickup: bed at the back, tall cab, long hood
+    # rear-engine coupe (911 shape): the roof slopes all the way down to the tail, round front wings
+    "rear911": [(0.006, 0.07, .02), (0.0, 0.20, .03), (0.04, 0.285, .05), (0.20, 0.385, .08), (0.40, 0.47, .08),
+                (0.55, 0.47, .07), (0.70, 0.33, .05), (0.93, 0.27, .07), (1.0, 0.185, .03), (0.992, 0.07, .02)],
+    # mid-engine roadster (no roof): low deck, short windscreen
+    "roadster": [(0.006, 0.07, .02), (0.0, 0.21, .03), (0.03, 0.31, .02), (0.40, 0.335, .03), (0.585, 0.335, .02),
+                 (0.625, 0.43, .015), (0.655, 0.43, .015), (0.70, 0.31, .04), (0.95, 0.25, .06), (1.0, 0.185, .03),
+                 (0.992, 0.07, .02)],
     "pickup":  [(0.006, 0.11, .02), (0.0, 0.40, .015), (0.40, 0.40, .005), (0.405, 0.625, .02), (0.44, 0.665, .04),
                 (0.62, 0.668, .05), (0.70, 0.475, .03), (0.965, 0.448, .03), (1.0, 0.36, .02), (0.992, 0.11, .02)],
 }
@@ -35,16 +42,19 @@ GLASS = {
     "suv":     ([(0.055, 0.415), (0.105, 0.532), (0.555, 0.548), (0.695, 0.405)], 0.45, 0.19),
     "rally":   ([(0.30, 0.325), (0.355, 0.455), (0.61, 0.46), (0.715, 0.328)], 0.50, None),
     "sports":  ([(0.40, 0.34), (0.445, 0.425), (0.55, 0.43), (0.68, 0.31)], None, None),
+    "rear911": ([(0.24, 0.375), (0.40, 0.455), (0.54, 0.455), (0.68, 0.335)], None, 0.36),
+    "roadster": ([(0.60, 0.34), (0.628, 0.42), (0.652, 0.42), (0.685, 0.33)], None, None),
     "pickup":  ([(0.43, 0.48), (0.455, 0.635), (0.61, 0.64), (0.685, 0.48)], 0.55, None),
 }
 WHEELS = {  # rear x, front x, radius (in car lengths)
     "sedan": (0.175, 0.81, 0.075), "hatch": (0.165, 0.815, 0.082), "avant": (0.175, 0.81, 0.075),
     "fastback": (0.175, 0.81, 0.075), "suv": (0.175, 0.805, 0.092), "rally": (0.17, 0.815, 0.07),
     "sports": (0.17, 0.80, 0.072), "pickup": (0.165, 0.80, 0.088),
+    "rear911": (0.17, 0.80, 0.074), "roadster": (0.17, 0.80, 0.072),
 }
 # vertical squash so height/length matches the real cars
 YS = {"sedan": 0.73, "hatch": 0.76, "avant": 0.74, "fastback": 0.72, "suv": 0.69, "rally": 0.72, "sports": 0.6,
-      "pickup": 0.53}
+      "pickup": 0.53, "rear911": 0.6, "roadster": 0.6}
 
 PAINT = {
     "tango_red": "#C61F2B", "ara_blue": "#1F3F86", "nardo": "#8E9396", "glacier": "#EDEDEA", "mythos": "#1D1E22",
@@ -55,7 +65,7 @@ PAINT = {
 
 def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, s_model=False, sline=False,
              tilt=0.0, bounce=0.0, rims="silver", calipers=None, shadow=True, alpha=1.0, highlight=None, salt=0,
-             livery=False, ghost=False):
+             livery=False, ghost=False, wing=0):
     """x,y = screen position of the rear-bottom corner (ground line). L = length in px."""
     col = hexc(PAINT.get(paint, paint))
     wr, wf, R = WHEELS[kind]
@@ -207,6 +217,13 @@ def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, 
     if rs:  # rear diffuser + spoiler lip
         ink(ctx, rpoly([P(0.0, 0.1), P(0.1, 0.095), P(0.09, 0.065), P(0.01, 0.07)], 3), hexc("#1A1B1E"), lw * 0.6, salt=salt)
 
+    if wing:   # GT3 / GT3 RS rear wing on two uprights
+        h = 0.07 + 0.05 * (wing - 1)
+        for ux in (0.07, 0.15):
+            ink(ctx, [P(ux - 0.008, 0.30), P(ux + 0.008, 0.31), P(ux + 0.006, 0.30 + h), P(ux - 0.006, 0.30 + h)], hexc("#1A1B1E"), lw * 0.5)
+        ww = 0.20 + 0.03 * (wing - 1)
+        ink(ctx, rpoly([P(-0.01, 0.30 + h + 0.035), P(ww, 0.30 + h + 0.02), P(ww, 0.30 + h - 0.005), P(-0.01, 0.30 + h + 0.005)], 0.006 * L),
+            hexc("#1A1B1E"), lw * 0.8)
     # wheels
     rim_col = {"silver": hexc("#C9CDD2"), "dark": hexc("#3A3D42"), "black": hexc("#1E1F23"), "gold": hexc("#C9A54A"),
                "white": hexc("#E8E8E6")}[rims]
