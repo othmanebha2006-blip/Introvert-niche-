@@ -1,7 +1,9 @@
+import os
+FRAMES = os.environ.get('FRAMES', 'frames')  # all frames of animation_reference.mov as 0001.png, 0002.png ...
 import numpy as np
 from PIL import Image
 S,OX,OY=0.635,206.6,4.5
-base=Image.open("frames/0055.png").convert("RGB")
+base=Image.open(os.path.join(FRAMES, "0055.png")).convert("RGB")
 bl=base.convert("L")
 def fit(im):
     g=im.convert("L"); best=None
@@ -14,7 +16,7 @@ def fit(im):
 sk=np.array(base)[300,470].astype(float); print("ref skin", sk, np.array(base)[250,620])
 SK_PNG=np.array([254,209,164],float)
 def extract(fn, box, name):
-    im=Image.open(f"frames/{fn}.png").convert("RGB")
+    im=Image.open(os.path.join(FRAMES, f"{fn}.png")).convert("RGB")
     e,ang,dx=fit(im); print(fn,name,"fit",round(e,2),ang,dx)
     # undo head motion: rotate back
     un=im.rotate(0, translate=(-dx,0)).rotate(-ang, resample=Image.BICUBIC, center=(536,375))
