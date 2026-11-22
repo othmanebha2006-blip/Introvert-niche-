@@ -117,6 +117,10 @@ def scene1(ctx, lt):          # cars, SUVs, trucks, electric vehicles
              ("TRUCKS", "pickup", BLUE, wt(b, "trucks"), 60, 880), ("ELECTRIC", "suv", "#3E7C5A", wt(b, "electric"), 570, 880)]
     badge_row(ctx, W / 2, BADGE_Y, [("CHEVY", "chrome", 0.0)], lt, 66)
     for name, kind, paint, t0, x, y in tiles:
+        if lt < t0 + 0.2:      # grey outlines wait for their word
+            a = min(1.0, lt / 0.3) * (1 - ease((lt - t0 + 0.05) / 0.25))
+            if a > 0:
+                ctx.push_group(); draw_car(ctx, kind, x, y, 430, ghost=True); ctx.pop_group_to_source(); ctx.paint_with_alpha(a)
         car_in(ctx, lt, t0 - 0.15, kind, x, y, 430, paint, dur=0.45)
         pop(ctx, lt, t0, x + 215, y - 230, lambda c, n=name: chip(c, 0, 0, n, "yellow" if n != "ELECTRIC" else "green", 46))
     if lt > wt(b, "electric") + 0.3:
