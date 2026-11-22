@@ -8,8 +8,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "lib"))
 from ink import *
 from car import draw_car, WHEELS
-from mecmation_img import Mecmation, gesture_arms, gesture_lean
-MEC = Mecmation()
+from ref_presenter import RefPresenter
+# presenter = the user's own @Mecmation animation clip, keyed and looped seamlessly to the video length
+PRESENTER = RefPresenter(os.environ.get("MEC_CACHE", os.path.expanduser("~/.cache/mecmation_loop")))
 from widgets import *
 import widgets
 
@@ -77,18 +78,6 @@ def st(beat, i):
     return ss[i]["start"] - BEAT_T[beat]
 
 
-# ---------------------------------------------------------------- presenter direction (one per sentence)
-DIRECT = [
-    ("explain", "up"), ("point", "neutral"), ("count", "up"), ("shrug", "neutral"), ("point", "neutral"), ("explain", "smug"),
-    ("point", "smug"), ("explain", "up"), ("point", "up"), ("explain", "neutral"), ("thumb", "smug"), ("hips", "skeptic"),
-    ("shrug", "up"), ("explain", "neutral"), ("point", "neutral"), ("explain", "neutral"), ("point", "up"),
-    ("explain", "smug"), ("shrug", "skeptic"), ("hips", "frown"), ("point", "neutral"), ("explain", "up"),
-    ("thumb", "smug"), ("point", "neutral"), ("count", "neutral"), ("explain", "neutral"), ("point", "up"),
-    ("hips", "skeptic"), ("shrug", "neutral"), ("explain", "neutral"), ("explain", "smug"), ("point", "up"),
-    ("thumb", "smug"),
-]
-assert len(DIRECT) == len(SENT), (len(DIRECT), len(SENT))
-
 # ---------------------------------------------------------------- audio envelope (mouth)
 with wave.open(os.path.join(HERE, "voice.wav")) as wf:
     SR = wf.getframerate(); raw = wf.readframes(wf.getnframes())
@@ -100,37 +89,6 @@ ENV = np.array([np.sqrt(np.mean(VOICE[i * hop:(i + 1) * hop] ** 2)) if i * hop <
 ENV = np.convolve(ENV, [0.25, 0.5, 0.25], "same")
 ENV = np.clip((ENV - 0.02) / 0.16, 0, 1)
 
-
-def _visemes():
-    """Per-frame mouth shape from the voice: rest / teeth (s, t, z) / o (round, low) / grin / open."""
-    n = len(ENV); out = []
-    hold, cur = 0, "rest"
-    for i in range(n):
-        seg = VOICE[i * hop:(i + 1) * hop]
-        if len(seg) < 32 or ENV[i] < 0.08:
-            v = "rest"
-        else:
-            sp = np.abs(np.fft.rfft(seg * np.hanning(len(seg))))
-            fr = np.fft.rfftfreq(len(seg), 1 / SR)
-            tot = sp.sum() + 1e-9
-            hf = sp[fr > 3500].sum() / tot
-            cen = (sp * fr).sum() / tot
-            if hf > 0.45:
-                v = "teeth"
-            elif cen < 900 and ENV[i] > 0.25:
-                v = "o"
-            elif ENV[i] > 0.85 and ENV[i] >= ENV[max(0, i - 1)] and ENV[i] >= ENV[min(n - 1, i + 1)]:
-                v = "open"            # only on syllable peaks
-            else:
-                v = "grin"
-        if v != cur and hold <= 0:
-            cur, hold = v, 3          # a mouth shape stays at least 3 frames, like the reference
-        hold -= 1
-        out.append(cur)
-    return out
-
-
-VIS = _visemes()
 
 # ---------------------------------------------------------------- background
 def background(ctx):
@@ -526,85 +484,6 @@ def end_card(ctx, t):
 
 
 # ---------------------------------------------------------------- presenter state
-# ---------------------------------------------------------------- gestures, chosen from what each phrase means
-# (sentence index, word that triggers it or None = sentence start, gesture, face)
-# gestures: rest, arms_out (all/wide/big), hands_up (question/wow), present_R / present_L (this one / that one),
-#           present_L_chest, chest (me / secret / just), wave_R (idea / one thing / hi)
-# face: None, "up" (brows up: question/surprise), "happy" (closed happy eyes: joke / fun fact)
-CUES = [
-    (0, "badges", "arms_out", None), (0, "explained", "present_R", None), (0, "minute", "wave_R", "happy"),
-    (1, None, "present_R", None), (1, "normal", "arms_out", None),
-    (2, "A3", "present_L", None), (2, "A4", "present_R", None), (2, "A6", "arms_out", None),
-    (3, "number", "wave_R", None), (3, "big", "arms_out", "up"),
-    (4, "Q", "present_R", None), (4, "SUV", "arms_out", None),
-    (5, "Same", "wave_R", None), (5, "Q3", "present_L", None), (5, "Q7", "present_R", None), (5, "big", "arms_out", None),
-    (6, None, "present_R", None), (6, "sporty", "hands_up", "happy"),
-    (7, "S3", "present_R", None), (7, "A3", "present_L", None), (7, "power", "hands_up", "up"), (7, "suspension", "arms_out", None),
-    (8, "RS", "present_R", None), (8, "RennSport", "hands_up", "up"),
-    (9, "German", "present_L_chest", None), (9, "racing", "arms_out", "happy"),
-    (10, "top", "wave_R", "up"),
-    (11, None, "hands_up", "up"),
-    (12, None, "arms_out", "happy"),
-    (13, "RS2", "present_R", None), (13, "Porsche", "present_L_chest", "up"), (13, "1994", "wave_R", None),
-    (14, "Avant", "present_R", None), (14, "estate", "arms_out", None),
-    (15, "Sportback", "present_L", None), (15, "roof", "present_R", None),
-    (16, "Quattro", "present_R", None), (16, "all-wheel", "arms_out", None),
-    (17, "famous", "hands_up", "happy"),
-    (18, "small", "chest", None), (18, "q", "wave_R", "happy"),
-    (19, None, "chest", None),
-    (20, "boot", "present_R", None), (20, "35", "present_L", None), (20, "45", "present_R", None), (20, "isnt", "hands_up", "up"),
-    (21, None, "present_R", None),
-    (22, "Bigger", "arms_out", None), (22, "power", "hands_up", "happy"),
-    (23, None, "present_R", None), (24, None, "present_L", None), (25, None, "present_R", None),
-    (26, None, "present_L_chest", None), (26, "electric", "arms_out", None),
-    (27, None, "hands_up", "up"), (28, None, "chest", None),
-    (29, "wheels", "present_L", None), (29, "bumpers", "present_R", None), (29, "same", "arms_out", "happy"),
-    (30, None, "present_L", None), (31, None, "present_R", None),
-    (32, "RS", "present_R", None), (32, "hear", "wave_R", "happy"),
-]
-
-
-def _cue_times():
-    out = []
-    for si, word, g, face in CUES:
-        if word is None:
-            t0 = SENT[si]["start"] - 0.12
-        else:
-            ws = [w for w in WORDS if w["sent"] == si and re.sub(r"[^\w-]", "", w["text"]).lower() == word.lower()]
-            assert ws, (si, word)
-            t0 = ws[0]["start"] - 0.12          # gesture leads the word slightly, like a real speaker
-        out.append((t0, g, face))
-    out.sort()
-    # long pauses: relax back to rest
-    return out
-
-
-CUE_T = _cue_times()
-FACE_T = [(t, f) for t, g, f in CUE_T if f]
-
-
-BLINKS = []                    # reference: closed eyes for 4 frames every 92-117 frames (~3.6 s)
-_t, _k = 2.6, 0
-while _t < 200:
-    BLINKS.append(_t); _t += (106, 108, 92, 106, 110, 117)[_k % 6] / 30; _k += 1
-
-
-def presenter_state(t, f):
-    prev, cur, tc = "rest", "rest", -10
-    for t0, g, face in CUE_T:
-        if t >= t0:
-            prev, cur, tc = cur, g, t0
-    if t > VO_END + 0.3:
-        prev, cur, tc = cur, "wave", VO_END + 0.3
-    tp = ease((t - tc) / 0.3)             # ~9 frames per gesture change, like the reference
-    blink = 1 if any(b <= t < b + 4 / 30 for b in BLINKS) else 0
-    wave = 8 * math.sin((t - tc) * 10) if cur == "wave" else 0.0
-    arms = gesture_arms(MEC, prev, cur, tp, wave)
-    lean = gesture_lean(prev, cur, ease((t - tc) / 0.4)) + 0.8 * math.sin(t * 0.9)
-    fi = min(f, len(VIS) - 1)
-    return dict(x=540, ground=1912, s=0.6, arms=arms, viseme=VIS[fi], open=float(ENV[fi]), blink=blink, lean=lean)
-
-
 def caption_now(t):
     cur = None
     for w in WORDS:
@@ -648,7 +527,7 @@ def render(f, surf):
     word, age, key = caption_now(t)
     if word:
         caption(ctx, word, W / 2, 978, age, key)
-    MEC.draw(ctx, presenter_state(t, f))
+    PRESENTER.draw(ctx, f, 540, 1912, 0.6)
 
 
 # ---------------------------------------------------------------- sound effects
