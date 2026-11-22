@@ -23,15 +23,23 @@ ANKLE = {"L": (436, 1368), "R": (590, 1368)}
 HIPJ = {"L": (430, 1000), "R": (603, 1004)}
 
 # arm poses: (elbow offset, hand offset) from the shoulder, hand kind
+REST_L = ((-68, 140), (-138, 282), "relax")
+REST_R = ((68, 140), (136, 282), "relax")
+CHEST_L = ((-30, 190), (135, 95), "chest")
+CHEST_R = ((30, 195), (-128, 105), "chest")
+SIDE_L = ((-150, -15), (-312, -5), "droop")
+SIDE_R = ((150, -15), (312, -5), "droop")
+# Gesture vocabulary, matched to the reference animation (Chevy clip):
 POSES = {
-    "rest":    {"L": ((-68, 140), (-138, 282), "relax"), "R": ((68, 140), (136, 282), "relax")},
-    "hips":    {"L": ((-150, 150), (-35, 300), "fist"), "R": ((150, 150), (35, 300), "fist")},
-    "explain": {"L": ((-120, 170), (40, 120), "open"), "R": ((68, 140), (136, 282), "relax")},
-    "point":   {"L": ((-120, -60), (-150, -290), "point"), "R": ((150, 150), (35, 300), "fist")},
-    "shrug":   {"L": ((-150, 110), (-260, -10), "open"), "R": ((150, 110), (260, -10), "open")},
-    "count":   {"L": ((-120, 170), (30, 100), "open"), "R": ((120, 170), (-30, 70), "point")},
-    "thumb":   {"L": ((-150, 150), (-35, 300), "fist"), "R": ((150, 140), (80, 10), "thumb")},
-    "wave":    {"L": ((-68, 140), (-138, 282), "relax"), "R": ((160, -40), (190, -260), "open")},
+    "rest":            {"L": REST_L, "R": REST_R},
+    "arms_out":        {"L": ((-118, 70), (-262, 125), "droop"), "R": ((118, 70), (262, 125), "droop")},   # all / wide / big
+    "hands_up":        {"L": ((-92, 175), (-205, 15), "palm"), "R": ((92, 175), (205, 15), "palm")},       # question / wow
+    "present_R":       {"L": CHEST_L, "R": SIDE_R},     # "this one": hand on chest, other arm presents
+    "present_L":       {"L": SIDE_L, "R": REST_R},
+    "present_L_chest": {"L": SIDE_L, "R": CHEST_R},
+    "chest":           {"L": CHEST_L, "R": REST_R},     # me / between us / secret
+    "wave_R":          {"L": REST_L, "R": ((120, 150), (168, -78), "palm")},   # idea / hi / one thing
+    "wave":            {"L": REST_L, "R": ((120, 150), (168, -78), "palm")},
 }
 
 
@@ -106,32 +114,43 @@ def _shirt(ctx, salt):
 
 
 def _hand(ctx, w, d, kind, side, salt, wave=0.0):
+    out = -1 if side == "L" else 1          # +1: hand on the screen-right side
     ang = math.atan2(d[1], d[0])
-    ctx.save(); ctx.translate(*w); ctx.rotate(ang)
-    m = 1 if side == "L" else -1     # mirror so the thumb is on the right side
-    def f(a, L, curl=0.25, wdt=12):
-        p0 = (0, 0)
+    if kind == "droop":                      # relaxed presenting hand, fingers hang down and out
+        base = ang + 1.05 * out
+    elif kind == "palm":                     # open hand, fingers up
+        base = -math.pi / 2 + 0.35 * out + wave
+    elif kind == "chest":                    # flat on the chest, fingers across it
+        base = (-0.35 if side == "L" else math.pi + 0.35)
+    else:
+        base = ang
+    ctx.save(); ctx.translate(*w); ctx.rotate(base)
+    m = 1 if side == "L" else -1
+
+    def f(a, L, curl=0.25, wdt=11.5):
         p1 = (math.cos(a) * L * 0.55, math.sin(a) * L * 0.55)
         p2 = (math.cos(a + curl) * L, math.sin(a + curl) * L)
-        line(ctx, qbez(p0, p1, p2, 8), wdt, salt=salt)
+        line(ctx, qbez((0, 0), p1, p2, 8), wdt, salt=salt)
     if kind == "relax":
         for a, L, c in ((-0.42 * m, 76, -0.3 * m), (-0.14 * m, 90, 0.05 * m), (0.14 * m, 90, 0.1 * m), (0.4 * m, 72, 0.32 * m)):
             f(a, L, c)
-    elif kind == "open":
-        ctx.rotate(wave)
-        for a in (-0.9, -0.35, 0.1, 0.55):
-            f(a * m, 80, 0.05 * m)
-        f(1.35 * m, 58, 0.2 * m)
+    elif kind == "droop":
+        c = 0.35 * out * (1 if side == "R" else -1)
+        for a, L in ((-0.45, 64), (-0.15, 74), (0.15, 74), (0.45, 64)):
+            f(a, L, 0.3)
+        f(-0.95, 48, -0.2)
+    elif kind == "palm":
+        for a, L in ((-0.55, 66), (-0.18, 76), (0.18, 76), (0.55, 66)):
+            f(a, L, 0.08 * out)
+        f(1.15 * -out, 54, 0.2 * -out)
+    elif kind == "chest":
+        for a, L in ((-0.5, 74), (-0.17, 84), (0.17, 84), (0.5, 74)):
+            f(a, L, 0.25 * m)
+        f(-1.1 * m, 46, -0.2 * m)
     elif kind == "point":
         f(0, 100, 0)
         for a in (0.55, 0.95, 1.3):
             f(a * m, 40, 1.2 * m)
-        f(-0.8 * m, 46, 0.3 * m)
-    elif kind == "thumb":
-        for a in (0.4, 0.75, 1.1, 1.45):
-            f(a * m, 42, 1.4 * m)
-        ctx.rotate(-ang)
-        line(ctx, qbez((0, 0), (4, -40), (2, -80), 8), 13, salt=salt)
     else:  # fist
         for a in (-0.5, -0.15, 0.2, 0.55):
             f(a, 40, 1.6 * m)
@@ -154,7 +173,9 @@ def _head(ctx, st, salt):
     big = 1.15 if br == "up" else 1.0
     for s, ex in ((-1, 467), (1, 572)):
         ey = 392
-        if blink > 0.5:
+        if st.get("happy", 0) > 0.5:
+            line(ctx, qbez((ex - 17, ey + 8), (ex, ey - 16), (ex + 17, ey + 8), 8), 8, salt=salt)
+        elif blink > 0.5:
             line(ctx, qbez((ex - 15, ey + 2), (ex, ey + 10), (ex + 15, ey + 2), 6), 8, salt=salt)
         else:
             ink(ctx, ellipse(ex + lx * 9, ey + ly * 9, 14 * big, 21 * big * (1 - 0.7 * blink), 24), INK, 0)
@@ -182,18 +203,19 @@ def _mouth(ctx, o, shape, smile, smug, salt):
             ink(ctx, ellipse(p[0], p[1], 5, 5, 10), INK, 0)
         return
     if shape == "oh":
-        m = ellipse(x, y + 18, 26 + 6 * o, 18 + 26 * o, 30)
-    else:
-        w = (62 if shape == "ah" else 70) + 6 * o
-        h = (16 + 52 * o) if shape == "ah" else (12 + 26 * o)
-        top = qbez((x - w, y - 4), (x, y + 8), (x + w, y - 4), 10)
-        bot = bez((x + w, y - 4), (x + w * 0.8, y + h * 1.25), (x - w * 0.8, y + h * 1.25), (x - w, y - 4), 16)
-        m = top + bot[1:]
-    ink(ctx, m, hexc("#6B1A1F"), 0)
+        m = ellipse(x, y + 14, 14 + 10 * o, 17 + 16 * o, 30)
+        ink(ctx, m, hexc("#C62828"), 8, salt=salt)
+        return
+    w = (64 if shape == "ah" else 72) + 6 * o
+    h = (18 + 46 * o) if shape == "ah" else (14 + 26 * o)
+    top = qbez((x - w, y - 6), (x, y + 6), (x + w, y - 6), 10)
+    bot = bez((x + w, y - 6), (x + w * 0.8, y + h * 1.3), (x - w * 0.8, y + h * 1.3), (x - w, y - 6), 16)
+    m = top + bot[1:]
+    ink(ctx, m, hexc("#5E1418"), 0)
     ctx.save(); path(ctx, m); ctx.clip()
-    ink(ctx, ellipse(x, y + 18 + 40 * o, 40, 22 + 10 * o, 24), hexc("#E86A72"), 0)
-    if shape == "ee":
-        ink(ctx, rrect(x - 80, y - 20, 160, 26, 6), WHITE, 0)
+    if shape == "ah":
+        ink(ctx, ellipse(x, y + h * 1.05, 36, 14 + 8 * o, 24), hexc("#E06470"), 0)
+    ink(ctx, rrect(x - w - 10, y - 30, 2 * w + 20, 30 + min(16, h * 0.42), 6), WHITE, 0)
     ctx.restore()
     ink(ctx, m, None, 9, salt=salt)
 

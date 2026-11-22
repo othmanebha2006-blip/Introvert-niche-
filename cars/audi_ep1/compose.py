@@ -493,62 +493,94 @@ def end_card(ctx, t):
 
 
 # ---------------------------------------------------------------- presenter state
-HOPS = {0, 12, 22, 32}        # sentences that start with a little jump
+# ---------------------------------------------------------------- gestures, chosen from what each phrase means
+# (sentence index, word that triggers it or None = sentence start, gesture, face)
+# gestures: rest, arms_out (all/wide/big), hands_up (question/wow), present_R / present_L (this one / that one),
+#           present_L_chest, chest (me / secret / just), wave_R (idea / one thing / hi)
+# face: None, "up" (brows up: question/surprise), "happy" (closed happy eyes: joke / fun fact)
+CUES = [
+    (0, "badges", "arms_out", None), (0, "explained", "present_R", None), (0, "minute", "wave_R", "happy"),
+    (1, None, "present_R", None), (1, "normal", "arms_out", None),
+    (2, "A3", "present_L", None), (2, "A4", "present_R", None), (2, "A6", "arms_out", None),
+    (3, "number", "wave_R", None), (3, "big", "arms_out", "up"),
+    (4, "Q", "present_R", None), (4, "SUV", "arms_out", None),
+    (5, "Same", "wave_R", None), (5, "Q3", "present_L", None), (5, "Q7", "present_R", None), (5, "big", "arms_out", None),
+    (6, None, "present_R", None), (6, "sporty", "hands_up", "happy"),
+    (7, "S3", "present_R", None), (7, "A3", "present_L", None), (7, "power", "hands_up", "up"), (7, "suspension", "arms_out", None),
+    (8, "RS", "present_R", None), (8, "RennSport", "hands_up", "up"),
+    (9, "German", "present_L_chest", None), (9, "racing", "arms_out", "happy"),
+    (10, "top", "wave_R", "up"),
+    (11, None, "hands_up", "up"),
+    (12, None, "arms_out", "happy"),
+    (13, "RS2", "present_R", None), (13, "Porsche", "present_L_chest", "up"), (13, "1994", "wave_R", None),
+    (14, "Avant", "present_R", None), (14, "estate", "arms_out", None),
+    (15, "Sportback", "present_L", None), (15, "roof", "present_R", None),
+    (16, "Quattro", "present_R", None), (16, "all-wheel", "arms_out", None),
+    (17, "famous", "hands_up", "happy"),
+    (18, "small", "chest", None), (18, "q", "wave_R", "happy"),
+    (19, None, "chest", None),
+    (20, "boot", "present_R", None), (20, "35", "present_L", None), (20, "45", "present_R", None), (20, "isnt", "hands_up", "up"),
+    (21, None, "present_R", None),
+    (22, "Bigger", "arms_out", None), (22, "power", "hands_up", "happy"),
+    (23, None, "present_R", None), (24, None, "present_L", None), (25, None, "present_R", None),
+    (26, None, "present_L_chest", None), (26, "electric", "arms_out", None),
+    (27, None, "hands_up", "up"), (28, None, "chest", None),
+    (29, "wheels", "present_L", None), (29, "bumpers", "present_R", None), (29, "same", "arms_out", "happy"),
+    (30, None, "present_L", None), (31, None, "present_R", None),
+    (32, "RS", "present_R", None), (32, "hear", "wave_R", "happy"),
+]
+
+
+def _cue_times():
+    out = []
+    for si, word, g, face in CUES:
+        if word is None:
+            t0 = SENT[si]["start"] - 0.12
+        else:
+            ws = [w for w in WORDS if w["sent"] == si and re.sub(r"[^\w-]", "", w["text"]).lower() == word.lower()]
+            assert ws, (si, word)
+            t0 = ws[0]["start"] - 0.12          # gesture leads the word slightly, like a real speaker
+        out.append((t0, g, face))
+    out.sort()
+    # long pauses: relax back to rest
+    return out
+
+
+CUE_T = _cue_times()
+FACE_T = [(t, f) for t, g, f in CUE_T if f]
 
 
 def presenter_state(t, f):
+    prev, cur, tc = "rest", "rest", -10
+    for t0, g, face in CUE_T:
+        if t >= t0:
+            prev, cur, tc = cur, g, t0
+    if t > VO_END + 0.3:
+        prev, cur, tc = cur, "wave", VO_END + 0.3
+    # relax to rest when nothing has been said for a while
+    tp = ease((t - tc) / 0.28)
+    mouth = float(ENV[min(f, len(ENV) - 1)])
     si = 0
     for i, s in enumerate(SENT):
-        if t >= s["start"] - 0.15: si = i
-    pose_now, brow = DIRECT[si]
-    pose_prev = DIRECT[si - 1][0] if si > 0 else "rest"
-    t_s = SENT[si]["start"] - 0.15
-    tp = ease((t - t_s) / 0.3) if t >= SENT[0]["start"] - 0.15 else 1
-    if t < SENT[0]["start"] - 0.15:
-        pose_now, pose_prev, brow = "rest", "rest", "neutral"
-    wave = 0.0
-    if t > VO_END + 0.3:
-        pose_prev, pose_now, brow = DIRECT[-1][0], "wave", "up"
-        tp = ease((t - VO_END - 0.3) / 0.3)
-        wave = 0.35 * math.sin((t - VO_END) * 11)
-    mouth = float(ENV[min(f, len(ENV) - 1)])
-    shape = ["ah", "ee", "ah", "oh"][(f // 3 + si) % 4]
+        if t >= s["start"]: si = i
+    shape = ["ee", "ah", "ee", "oh", "ee", "ah"][(f // 3 + si) % 6]
+    face = None
+    for t0, fc in FACE_T:
+        if t0 <= t < t0 + (0.7 if fc == "happy" else 1.1):
+            face = fc
     ph = (t + 0.7) % 3.1
     blink = 1.0 if ph < 0.1 else (0.5 if ph < 0.14 else 0)
-    if pose_now == "point":
-        look = (-0.35, -0.75)
-    elif pose_now in ("explain", "thumb", "wave"):
-        look = (0.0, 0.0)
-    else:
-        look = (0.3 * math.sin(t * 0.9), -0.2)
-    # body: breathing, talk bounce, weight shift, lean into gestures
-    bob = 6 * math.sin(t * 2.4) + 12 * mouth
-    squash = 1.0 - 0.012 * mouth
-    lean_pose = {"point": -0.045, "shrug": 0.0, "thumb": 0.03, "hips": 0.02, "explain": -0.015, "count": 0.0,
-                 "rest": 0.0, "wave": 0.03}
-    lean = 0.022 * math.sin(t * 0.9) + lean_pose[pose_prev] * (1 - tp) + lean_pose[pose_now] * tp
-    tilt = 0.035 * math.sin(t * 1.3) + 0.035 * mouth * math.sin(t * 8.5)
-    if brow == "skeptic":
-        tilt += 0.08
-    elif brow == "frown":
-        tilt -= 0.05
-    # gesture overshoot: a small extra bounce when the pose changes
-    if 0 < t - t_s < 0.45:
-        bob += 14 * math.sin((t - t_s) / 0.45 * math.pi)
-    hop = 0.0
-    if si in HOPS:
-        k = t - t_s
-        if 0 <= k < 0.12:
-            squash *= 1 - 0.07 * math.sin(k / 0.12 * math.pi / 2)
-        elif 0.12 <= k < 0.52:
-            q = (k - 0.12) / 0.4
-            hop = 70 * 4 * q * (1 - q)
-            squash *= 1 + 0.04 * math.sin(q * math.pi)
-        elif 0.52 <= k < 0.66:
-            squash *= 1 - 0.06 * math.sin((k - 0.52) / 0.14 * math.pi)
-    return dict(x=540, ground=1912, s=0.6, mouth=mouth, shape=shape, blink=blink, brows=brow, look=look,
-                pose=lerp_pose(pose_prev, pose_now, tp), lean=lean, tilt=tilt, bob=bob, squash=squash, hop=hop,
-                smile=0.8 if brow == "smug" else 0.5, wave=wave)
+    wave = 0.3 * math.sin((t - tc) * 11) if cur in ("wave",) else 0.0
+    # calm body, like the reference: tiny breathing, a little talk bounce, very small head motion
+    bob = 3 * math.sin(t * 2.2) + 5 * mouth
+    lean = 0.008 * math.sin(t * 0.8)
+    tilt = 0.015 * math.sin(t * 1.2) + 0.012 * mouth * math.sin(t * 7)
+    if 0 < t - tc < 0.35:
+        bob += 5 * math.sin((t - tc) / 0.35 * math.pi)
+    return dict(x=540, ground=1912, s=0.6, mouth=mouth, shape=shape, blink=blink,
+                brows="up" if face == "up" else "neutral", happy=1 if face == "happy" else 0, look=(0, 0),
+                pose=lerp_pose(prev, cur, tp), lean=lean, tilt=tilt, bob=bob, squash=1.0, hop=0.0,
+                smile=0.5, wave=wave)
 
 
 def caption_now(t):
