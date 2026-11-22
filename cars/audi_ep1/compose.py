@@ -8,7 +8,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "lib"))
 from ink import *
 from car import draw_car, WHEELS
-from mecmation_img import Mecmation, gesture_arms
+from mecmation_img import Mecmation, gesture_arms, gesture_lean
 MEC = Mecmation()
 from widgets import *
 import widgets
@@ -124,7 +124,7 @@ def _visemes():
             else:
                 v = "grin"
         if v != cur and hold <= 0:
-            cur, hold = v, 2          # a mouth shape stays at least 2 frames, like the reference
+            cur, hold = v, 3          # a mouth shape stays at least 3 frames, like the reference
         hold -= 1
         out.append(cur)
     return out
@@ -583,6 +583,12 @@ CUE_T = _cue_times()
 FACE_T = [(t, f) for t, g, f in CUE_T if f]
 
 
+BLINKS = []                    # reference: closed eyes for 4 frames every 92-117 frames (~3.6 s)
+_t, _k = 2.6, 0
+while _t < 200:
+    BLINKS.append(_t); _t += (106, 108, 92, 106, 110, 117)[_k % 6] / 30; _k += 1
+
+
 def presenter_state(t, f):
     prev, cur, tc = "rest", "rest", -10
     for t0, g, face in CUE_T:
@@ -591,18 +597,12 @@ def presenter_state(t, f):
     if t > VO_END + 0.3:
         prev, cur, tc = cur, "wave", VO_END + 0.3
     tp = ease((t - tc) / 0.3)             # ~9 frames per gesture change, like the reference
-    face = None
-    for t0, fc in FACE_T:
-        if t0 <= t < t0 + (0.7 if fc == "happy" else 1.1):
-            face = fc
-    ph = (t + 0.7) % 3.1
-    blink = 1.0 if ph < 0.12 else 0
-    wave = 0.25 * math.sin((t - tc) * 10) if cur == "wave" else 0.0
-    arms, front = gesture_arms(MEC, prev, cur, tp, wave)
+    blink = 1 if any(b <= t < b + 4 / 30 for b in BLINKS) else 0
+    wave = 8 * math.sin((t - tc) * 10) if cur == "wave" else 0.0
+    arms = gesture_arms(MEC, prev, cur, tp, wave)
+    lean = gesture_lean(prev, cur, ease((t - tc) / 0.4)) + 0.8 * math.sin(t * 0.9)
     fi = min(f, len(VIS) - 1)
-    return dict(x=540, ground=1912, s=0.6, arms=arms, front=front, viseme=VIS[fi], open=float(ENV[fi]),
-                blink=blink, happy=1 if face == "happy" else 0, brow_lift=14 if face == "up" else 0,
-                tilt=0.018 * math.sin(t * 1.4) + 0.01 * float(ENV[fi]) * math.sin(t * 6))
+    return dict(x=540, ground=1912, s=0.6, arms=arms, viseme=VIS[fi], open=float(ENV[fi]), blink=blink, lean=lean)
 
 
 def caption_now(t):

@@ -1,26 +1,30 @@
-"""@Mecmation built from the user's own image, pixel for pixel (cars/character_mecmation/mecmation_reference.png).
+"""@Mecmation built from the user's own image (cars/character_mecmation/mecmation_reference.png), never redrawn.
 
-Nothing is redrawn. The image is cut into layers and only these move, as in the user's reference animation
-(cars/character_mecmation/animation_reference.mov):
-  - arms: each arm is cut at the elbow into two original pieces (upper arm, forearm+hand) that rotate like a cut-out puppet
-  - head: the original head + beanie layer tilts very slightly around the neck
-  - mouth: original smile when silent; while talking it is covered with skin and a mouth shape is drawn (lip sync)
-  - eyes: blink / happy closed eyes;  brows: the original brow pixels are lifted
-Legs, shoes, shirt, emblem, beanie and text never change.
+Everything is matched to the user's animation (cars/character_mecmation/animation_reference.mov, analysed frame by frame):
+  - legs + shoes: the original pixels, never move
+  - shirt: original pixels, leans (shear about the hem) up to ~3 degrees toward the gesture, like the reference
+  - head + beanie: original pixels, rotate with the lean around the neck
+  - arms: at rest the original arm pixels; when gesturing, a smooth curved line of the same width/colour as the
+          original arm, ending in the ORIGINAL hand pixels (rotated), poses measured from the reference
+  - mouth: original smile when silent, otherwise the reference's own mouth drawings (sprites/mouth_*.png)
+  - blink: the reference's blink drawing (sprites/eyes_blink.png), 4 frames, about every 3.6 s
 """
 import math, os
 import numpy as np, cairo
 from PIL import Image
 from scipy import ndimage as nd
-from ink import qbez, ellipse, path, hexc, INK
 
-REF = os.path.join(os.path.dirname(__file__), "..", "character_mecmation", "mecmation_reference.png")
-SKIN = (254 / 255, 208 / 255, 164 / 255)
-BROWS = [(437, 485, 314, 340), (552, 601, 314, 340)]     # x0,x1,y0,y1 in image px
+HERE = os.path.dirname(__file__)
+CHAR = os.path.join(HERE, "..", "character_mecmation")
+REF = os.path.join(CHAR, "mecmation_reference.png")
+SKIN = (254 / 255, 209 / 255, 164 / 255)
 EYES = [(452, 482, 369, 411), (558, 588, 369, 410)]
 MOUTH = (449, 592, 475, 507)
 NECK = (518, 592)
-ARM_W = 20
+HEM = 1000.0
+ARM_W = 20.0
+MOUTH_XY = (416.9, 447.0)
+EYES_XY = (438.4, 343.0)
 
 
 def _surf(rgba):
@@ -35,12 +39,23 @@ def _surf(rgba):
     return s
 
 
+def _catmull(pts, n=10):
+    pts = [pts[0]] + list(pts) + [pts[-1]]
+    out = []
+    for i in range(1, len(pts) - 2):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[i + 1], pts[i + 2]
+        for k in range(n):
+            t = k / n; t2 = t * t; t3 = t2 * t
+            out.append(tuple(0.5 * ((2 * p1[j]) + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2
+                                    + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3) for j in (0, 1)))
+    out.append(pts[-2])
+    return out
+
+
 class Mecmation:
     def __init__(self, path_png=REF):
         im = np.asarray(Image.open(path_png).convert("RGB")).astype(np.int16)
         H, W, _ = im.shape
-        self.W, self.H = W, H
-        # background = white connected to the border; soft alpha on the anti-aliased edge
         white = im.min(2) > 200
         lab, _ = nd.label(white)
         border = np.unique(np.r_[lab[0], lab[-1], lab[:, 0], lab[:, -1]]); border = border[border > 0]
@@ -50,231 +65,189 @@ class Mecmation:
         alpha = np.where(fg, 255, 0).astype(np.float32)
         edge = nd.binary_dilation(bg, iterations=2) & fg
         alpha[edge] = np.clip((215 - lum[edge]) / (215 - 70) * 255, 0, 255)
-        # anti-aliased edge pixels become ink coloured, so no white halo
-        rgb = im.copy()
-        rgb[edge] = np.minimum(rgb[edge], 40)
+        rgb = im.copy(); rgb[edge] = np.minimum(rgb[edge], 40)
         rgba = np.dstack([rgb, alpha]).astype(np.uint8)
+        dark = im.max(2) < 90
+        self.ink = tuple((im[dark].mean(0) / 255).tolist()) if dark.any() else (0.05, 0.05, 0.05)
 
         red = (im[..., 0] > 170) & (im[..., 1] < 110) & (im[..., 2] < 110)
         shirt = nd.binary_fill_holes(nd.binary_closing(red, iterations=3))
         lab2, n2 = nd.label(shirt); sizes = nd.sum(shirt, lab2, range(1, n2 + 1))
-        shirt = lab2 == (np.argmax(sizes) + 1)
-        shirt = nd.binary_fill_holes(shirt)
+        shirt = nd.binary_fill_holes(lab2 == (np.argmax(sizes) + 1))
         shirt_d = nd.binary_dilation(shirt, iterations=18)
         yy, xx = np.mgrid[0:H, 0:W]
         head = fg & ((yy < 335) | (((xx - 518) / 232.0) ** 2 + ((yy - 415) / 186.0) ** 2 <= 1)) & (yy < 600)
         arms = fg & ~shirt_d & ~head & (yy > 560) & (yy < 1040) & ((xx < 420) | (xx > 615))
-        # keep only the two big arm components, then take their anti-aliased fringe too
-        lab3, n3 = nd.label(arms)
-        sz = nd.sum(arms, lab3, range(1, n3 + 1))
-        keep = [i + 1 for i in np.argsort(sz)[::-1][:2]]
-        arms = np.isin(lab3, keep)
+        lab3, n3 = nd.label(arms); sz = nd.sum(arms, lab3, range(1, n3 + 1))
+        arms = np.isin(lab3, [i + 1 for i in np.argsort(sz)[::-1][:2]])
         arms = nd.binary_dilation(arms, iterations=3) & fg & ~shirt_d & ~head
+
+        def lay(mask):
+            r = rgba.copy(); r[..., 3] = np.where(mask, r[..., 3], 0); return _surf(r)
+
         self.side = {}
-        for side, sel in (("L", xx < W / 2), ("R", xx >= W / 2)):
+        for sd, sel in (("L", xx < W / 2), ("R", xx >= W / 2)):
             m = arms & sel
             ys, xs = np.where(m)
             top = ys < ys.min() + 30
             sh = np.array([xs[top].mean(), ys[top].mean()])
-            # straight part of the arm -> axis
-            st_ = ys < ys.min() + 230
-            d = np.array([xs[st_].mean(), ys[st_].mean()]) - sh
-            d /= np.linalg.norm(d)
+            st_ = ys < ys.min() + 200
+            d = np.array([xs[st_].mean(), ys[st_].mean()]) - sh; d /= np.linalg.norm(d)
             t = (xs - sh[0]) * d[0] + (ys - sh[1]) * d[1]
-            perp = np.abs((xs - sh[0]) * -d[1] + (ys - sh[1]) * d[0])
-            core = perp < ARM_W * 1.2
-            wrist_t = t[core].max() if core.any() else t.max()
-            # the wrist is where the straight line ends and fingers start
-            hand_start = np.percentile(t, 70)
-            L_arm = hand_start
-            el_t = L_arm * 0.5
-            up = np.zeros_like(m); fo = np.zeros_like(m)
-            up[ys[t < el_t], xs[t < el_t]] = True
-            fo[ys[t >= el_t], xs[t >= el_t]] = True
-            shp = tuple(sh - d * 6)                     # pivot slightly inside the shirt
-            elb = tuple(sh + d * el_t)
-            ang = math.atan2(d[1], d[0])
-            def lay(mask):
-                r = rgba.copy(); r[..., 3] = np.where(mask, r[..., 3], 0); return _surf(r)
-            self.side[side] = dict(up=lay(up), fo=lay(fo), sh=shp, el=elb, ang=ang, lu=math.dist(shp, elb))
+            perp = (xs - sh[0]) * -d[1] + (ys - sh[1]) * d[0]
+            # wrist = first t where the mask gets much wider than the arm line (fingers start)
+            tw = None
+            for tt in np.arange(60, t.max(), 4):
+                sl = np.abs(t - tt) < 3
+                if sl.any() and perp[sl].max() - perp[sl].min() > ARM_W * 1.9:
+                    tw = tt - 14; break
+            tw = tw or t.max() * 0.8
+            hand = np.zeros_like(m); hand[ys[t >= tw], xs[t >= tw]] = True
+            W0 = tuple(sh + d * tw)
+            self.side[sd] = dict(arm=lay(m), hand=lay(hand), sh=tuple(sh), w0=W0, ang=math.degrees(math.atan2(d[1], d[0])))
+
         body = fg & ~arms & ~head
         b = rgba.copy(); b[..., 3] = np.where(body, b[..., 3], 0)
-        # the head covers the top of the shirt; keep shirt pixels under the head so a tilt never shows a hole
         under = head & (yy > 560) & red
         b[..., 3] = np.where(under, 255, b[..., 3])
-        self.body = _surf(b)
+        legs = body & (yy > HEM) & ~shirt_d
+        top = b.copy(); top[..., 3] = np.where(legs, 0, top[..., 3])
+        bot = b.copy(); bot[..., 3] = np.where(legs, bot[..., 3], 0)
+        self.shirt = _surf(top); self.legs = _surf(bot)
         h = rgba.copy(); h[..., 3] = np.where(head, h[..., 3], 0)
         self.head = _surf(h)
-        self.brows = []
-        for x0, x1, y0, y1 in BROWS:
-            c = rgba[y0 - 3:y1 + 3, x0 - 3:x1 + 3].copy()
-            dark = c[..., :3].max(2) < 120
-            c[..., 3] = np.where(dark, 255, 0)
-            self.brows.append((_surf(c), x0 - 3, y0 - 3))
+        sp = os.path.join(CHAR, "sprites")
+        self.sprites = {n[:-4]: cairo.ImageSurface.create_from_png(os.path.join(sp, n)) for n in os.listdir(sp) if n.endswith(".png")}
 
     # ------------------------------------------------------------------
-    def arm_angles_rest(self, side):
-        return self.side[side]["ang"]
+    def rest_points(self, sd):
+        g = self.side[sd]
+        (x0, y0), (x1, y1) = g["sh"], g["w0"]
+        dx, dy = x1 - x0, y1 - y0
+        # start a little inside the shirt so the line is hidden at the shoulder
+        return [(x0 - dx * 0.06 + dx * 1.06 * k / 4, y0 - dy * 0.06 + dy * 1.06 * k / 4) for k in range(5)], g["ang"], False
 
     def draw(self, ctx, st):
         s = st.get("s", 0.6)
+        lean = math.radians(st.get("lean", 0.0))
+        k = math.tan(lean)
         ctx.save()
-        k = 1.0
         ctx.save(); ctx.translate(st["x"], st["ground"] - 6); ctx.scale(1, 0.12)
         ctx.arc(0, 0, 210 * s, 0, 2 * math.pi); ctx.set_source_rgba(0, 0, 0, 0.14); ctx.fill(); ctx.restore()
         ctx.translate(st["x"] - 518 * s, st["ground"] - 1455 * s)
         ctx.scale(s, s)
-        arms = st["arms"]                     # {"L": (upper_angle, fore_angle), "R": ...} absolute radians
-        front = st.get("front", set())
+        self._paint(ctx, self.legs)
+        arms = st["arms"]   # side -> (points, hand_angle_deg, front) or None for the original rest arm
+        shear = cairo.Matrix(1, 0, -k, 1, k * HEM, 0)       # x' = x + k*(HEM - y)
         for sd in ("L", "R"):
-            self._upper(ctx, sd, arms[sd][0])
+            if arms[sd] is None:
+                ctx.save(); ctx.transform(shear); self._paint(ctx, self.side[sd]["arm"]); ctx.restore()
+            elif not arms[sd][2]:
+                self._arm(ctx, sd, arms[sd], k)
+        ctx.save(); ctx.transform(shear); self._paint(ctx, self.shirt); ctx.restore()
         for sd in ("L", "R"):
-            if sd not in front:
-                self._fore(ctx, sd, *arms[sd])
-        self._paint(ctx, self.body)
-        for sd in ("L", "R"):
-            if sd in front:
-                self._fore(ctx, sd, *arms[sd])
-        # head
+            if arms[sd] is not None and arms[sd][2]:
+                self._arm(ctx, sd, arms[sd], k)
         ctx.save()
-        ctx.translate(*NECK); ctx.rotate(st.get("tilt", 0)); ctx.translate(-NECK[0], -NECK[1])
+        ctx.translate(k * (HEM - NECK[1]), 0)
+        ctx.translate(*NECK); ctx.rotate(lean); ctx.translate(-NECK[0], -NECK[1])
         self._paint(ctx, self.head)
         self._face(ctx, st)
         ctx.restore()
         ctx.restore()
 
-    def _paint(self, ctx, surf):
-        ctx.set_source_surface(surf, 0, 0)
+    def _paint(self, ctx, surf, x=0, y=0):
+        ctx.set_source_surface(surf, x, y)
         ctx.get_source().set_filter(cairo.FILTER_GOOD)
         ctx.paint()
 
-    def _upper(self, ctx, sd, a):
+    def _arm(self, ctx, sd, spec, k):
+        pts, ang, front = spec
+        pts = [(x + k * (HEM - y), y) for x, y in pts]
+        curve = _catmull(pts, 10)
+        ctx.move_to(*curve[0])
+        for p in curve[1:]:
+            ctx.line_to(*p)
+        ctx.set_source_rgb(*self.ink[:3]); ctx.set_line_width(ARM_W)
+        ctx.set_line_cap(cairo.LINE_CAP_ROUND); ctx.set_line_join(cairo.LINE_JOIN_ROUND); ctx.stroke()
         g = self.side[sd]
+        W = pts[-1]
         ctx.save()
-        ctx.translate(*g["sh"]); ctx.rotate(a - g["ang"]); ctx.translate(-g["sh"][0], -g["sh"][1])
-        self._paint(ctx, g["up"])
+        ctx.translate(*W); ctx.rotate(math.radians(ang - g["ang"])); ctx.translate(-g["w0"][0], -g["w0"][1])
+        self._paint(ctx, g["hand"])
         ctx.restore()
 
-    def _fore(self, ctx, sd, au, af):
-        g = self.side[sd]
-        ex = g["sh"][0] + math.cos(au) * g["lu"]; ey = g["sh"][1] + math.sin(au) * g["lu"]
-        ctx.save()
-        ctx.translate(ex, ey); ctx.rotate(af - g["ang"]); ctx.translate(-g["el"][0], -g["el"][1])
-        self._paint(ctx, g["fo"])
-        ctx.restore()
-        # round elbow joint hides the cut
-        ctx.arc(ex, ey, ARM_W / 2 + 0.5, 0, 2 * math.pi); ctx.set_source_rgba(*INK); ctx.fill()
-
-    # ------------------------------------------------------------------ face
     def _skin(self, ctx, cx, cy, rx, ry):
         ctx.save(); ctx.translate(cx, cy); ctx.scale(rx, ry); ctx.arc(0, 0, 1, 0, 2 * math.pi); ctx.restore()
         ctx.set_source_rgb(*SKIN); ctx.fill()
 
     def _face(self, ctx, st):
-        lift = st.get("brow_lift", 0.0)
-        if lift > 0.5:
-            for (surf, x0, y0), (bx0, bx1, by0, by1) in zip(self.brows, BROWS):
-                self._skin(ctx, (bx0 + bx1) / 2, (by0 + by1) / 2, (bx1 - bx0) / 2 + 8, (by1 - by0) / 2 + 7)
-                ctx.set_source_surface(surf, x0, y0 - lift); ctx.paint()
-        if st.get("happy", 0) > 0.5 or st.get("blink", 0) > 0.5:
+        if st.get("blink", 0) > 0.5:
             for x0, x1, y0, y1 in EYES:
-                cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-                self._skin(ctx, cx, cy, (x1 - x0) / 2 + 6, (y1 - y0) / 2 + 6)
-                if st.get("happy", 0) > 0.5:
-                    pts = qbez((cx - 19, cy + 8), (cx, cy - 18), (cx + 19, cy + 8), 12)
-                else:
-                    pts = qbez((cx - 17, cy + 2), (cx, cy + 9), (cx + 17, cy + 2), 12)
-                self._stroke(ctx, pts, 9)
+                self._skin(ctx, (x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2 + 7, (y1 - y0) / 2 + 7)
+            self._paint(ctx, self.sprites["eyes_blink"], *EYES_XY)
         v = st.get("viseme", "rest")
         if v != "rest":
             x0, x1, y0, y1 = MOUTH
-            self._skin(ctx, (x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2 + 18, (y1 - y0) / 2 + 13)
-            self._mouth(ctx, v, st.get("open", 0.5))
-
-    def _stroke(self, ctx, pts, w):
-        path(ctx, pts, False)
-        ctx.set_source_rgba(*INK); ctx.set_line_width(w)
-        ctx.set_line_cap(cairo.LINE_CAP_ROUND); ctx.set_line_join(cairo.LINE_JOIN_ROUND); ctx.stroke()
-
-    def _mouth(self, ctx, v, o):
-        x, y = 520, 486
-        if v == "o":
-            m = ellipse(x, y + 6, 13 + 7 * o, 15 + 13 * o, 30)
-            path(ctx, m); ctx.set_source_rgba(*hexc("#B71C1C")); ctx.fill_preserve()
-            ctx.set_source_rgba(*INK); ctx.set_line_width(8); ctx.stroke()
-            return
-        if v == "teeth":          # clenched teeth (s, t, z sounds)
-            w, h = 48, 20
-            r = [(x - w, y - 4), (x + w, y - 4), (x + w, y + h - 4), (x - w, y + h - 4)]
-            path(ctx, r); ctx.set_source_rgb(1, 1, 1); ctx.fill_preserve()
-            ctx.set_source_rgba(*INK); ctx.set_line_width(5); ctx.stroke()
-            for i in range(1, 6):
-                xx = x - w + i * 2 * w / 6
-                ctx.move_to(xx, y - 4); ctx.line_to(xx, y + h - 4)
-            ctx.move_to(x - w, y + h / 2 - 4); ctx.line_to(x + w, y + h / 2 - 4)
-            ctx.set_line_width(3); ctx.stroke()
-            return
-        # grin (teeth) or open (tongue): D shape like the reference
-        w = 66 if v == "grin" else 58
-        h = (16 + 18 * o) if v == "grin" else (22 + 30 * o)
-        top = qbez((x - w, y - 8), (x, y + 2), (x + w, y - 8), 12)
-        bot = [(x + w, y - 8)] + [(x + w * math.cos(t), y - 8 + h * math.sin(t)) for t in np.linspace(0, math.pi, 20)]
-        m = top + bot[1:]
-        path(ctx, m); ctx.set_source_rgba(*hexc("#4A0E12")); ctx.fill()
-        ctx.save(); path(ctx, m); ctx.clip()
-        if v == "open":
-            ctx.save(); ctx.translate(x, y + h * 0.95); ctx.scale(34, 16 + 6 * o); ctx.arc(0, 0, 1, 0, 2 * math.pi); ctx.restore()
-            ctx.set_source_rgba(*hexc("#E35D6A")); ctx.fill()
-        ctx.rectangle(x - w - 5, y - 30, 2 * w + 10, 30 + min(14, h * 0.45)); ctx.set_source_rgb(1, 1, 1); ctx.fill()
-        ctx.restore()
-        path(ctx, m); ctx.set_source_rgba(*INK); ctx.set_line_width(8); ctx.set_line_join(cairo.LINE_JOIN_ROUND); ctx.stroke()
+            self._skin(ctx, (x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2 + 14, (y1 - y0) / 2 + 12)
+            name = {"grin": "mouth_grin", "open": "mouth_open", "teeth": "mouth_teeth",
+                    "o": "mouth_o" if st.get("open", 0) > 0.45 else "mouth_o_small"}[v]
+            self._paint(ctx, self.sprites[name], *MOUTH_XY)
 
 
-# ---------------------------------------------------------------- poses: absolute arm angles (degrees)
-# screen-left arm angles; the right arm mirrors (180 - a). 90 = straight down, 180 = out to the side, 270 = up.
-POSES_DEG = {
-    "rest":     {"L": None, "R": None},
-    "arms_out": {"L": (150, 158), "R": (150, 158)},
-    "hands_up": {"L": (128, 238), "R": (128, 238)},
-    "side":     {"L": (183, 182)},
-    "chest":    {"L": (108, -12)},
-    "raise":    {"L": (122, 258)},
+# ---------------------------------------------------------------- poses measured from the reference clip
+# per arm: 5 points from the hidden shoulder to the wrist (image px), hand angle (deg, direction of the fingers),
+# front (True: drawn over the shirt). The right arm is the mirror of the left one.
+def _mir(spec):
+    pts, ang, front = spec
+    return [(1036 - x, y) for x, y in pts], 180 - ang, front
+
+
+ARMS = {
+    "out":   ([(405, 640), (355, 690), (290, 690), (215, 722), (150, 772)], 125, False),
+    "up":    ([(405, 650), (345, 705), (262, 735), (222, 690), (209, 625)], 225, False),
+    "side":  ([(404, 640), (351, 684), (256, 672), (186, 668), (129, 672)], 160, False),
+    "chest": ([(352, 688), (328, 745), (338, 812), (410, 812), (472, 790)], -35, True),
+    "raise": ([(404, 650), (342, 711), (269, 747), (234, 700), (228, 627)], 227, False),
 }
-GESTURES = {   # gesture -> per arm pose name
-    "rest":            ("rest", "rest"),
-    "arms_out":        ("arms_out", "arms_out"),
-    "hands_up":        ("hands_up", "hands_up"),
+GESTURES = {   # gesture -> (screen-left arm, screen-right arm); None = original rest arm
+    "rest":            (None, None),
+    "arms_out":        ("out", "out"),
+    "hands_up":        ("up", "up"),
     "present_R":       ("chest", "side"),
-    "present_L":       ("side", "rest"),
+    "present_L":       ("side", None),
     "present_L_chest": ("side", "chest"),
-    "chest":           ("chest", "rest"),
-    "wave_R":          ("rest", "raise"),
-    "wave":            ("rest", "raise"),
+    "chest":           ("chest", None),
+    "wave_R":          (None, "raise"),
+    "wave":            (None, "raise"),
 }
+LEAN = {"rest": 0.0, "arms_out": 0.0, "hands_up": -2.0, "present_R": 2.5, "present_L": -2.5, "present_L_chest": -2.5,
+        "chest": 1.0, "wave_R": -1.5, "wave": -1.5}
 
 
-def arm_target(mec, side, pose):
-    rest = mec.side[side]["ang"]
-    spec = POSES_DEG[pose].get("L") if pose in POSES_DEG else None
-    if spec is None:
-        return (rest, rest)
-    u, f = [math.radians(a) for a in spec]
-    if side == "R":
-        u, f = math.pi - u, math.pi - f
-    return (u, f)
+def _spec(sd, name):
+    if name is None:
+        return None
+    s = ARMS[name]
+    return s if sd == "L" else _mir(s)
 
 
 def gesture_arms(mec, g_prev, g_cur, t, wave=0.0):
     out = {}
     for i, sd in enumerate(("L", "R")):
-        a0 = arm_target(mec, sd, GESTURES[g_prev][i])
-        a1 = arm_target(mec, sd, GESTURES[g_cur][i])
-        def lerp_ang(p, q):
-            d = (q - p + math.pi) % (2 * math.pi) - math.pi
-            return p + d * t
-        u, f = lerp_ang(a0[0], a1[0]), lerp_ang(a0[1], a1[1])
-        if sd == "R" and GESTURES[g_cur][i] == "raise":
-            f += wave
-        out[sd] = (u, f)
-    front = {sd for i, sd in enumerate(("L", "R")) if "chest" in (GESTURES[g_cur][i], GESTURES[g_prev][i] if t < 0.5 else "")}
-    return out, front
+        a = _spec(sd, GESTURES[g_prev][i]); b = _spec(sd, GESTURES[g_cur][i])
+        if b is None and (a is None or t >= 1):
+            out[sd] = None; continue
+        ra = mec.rest_points(sd)
+        a = a or ra; b = b or ra
+        pts = [(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t) for p, q in zip(a[0], b[0])]
+        d = (b[1] - a[1] + 180) % 360 - 180
+        ang = a[1] + d * t
+        if GESTURES[g_cur][i] == "raise":
+            ang += wave
+        out[sd] = (pts, ang, b[2] if t > 0.5 else a[2])
+    return out
+
+
+def gesture_lean(g_prev, g_cur, t):
+    return LEAN[g_prev] + (LEAN[g_cur] - LEAN[g_prev]) * t
