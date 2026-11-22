@@ -8,7 +8,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "lib"))
 from ink import *
 from car import draw_car, WHEELS
-from mecmation import draw_mecmation, lerp_pose
+from mecmation_img import Mecmation, gesture_arms
+MEC = Mecmation()
 from widgets import *
 import widgets
 
@@ -98,6 +99,38 @@ hop = SR // FPS
 ENV = np.array([np.sqrt(np.mean(VOICE[i * hop:(i + 1) * hop] ** 2)) if i * hop < len(VOICE) else 0 for i in range(int(DUR * FPS) + 2)])
 ENV = np.convolve(ENV, [0.25, 0.5, 0.25], "same")
 ENV = np.clip((ENV - 0.02) / 0.16, 0, 1)
+
+
+def _visemes():
+    """Per-frame mouth shape from the voice: rest / teeth (s, t, z) / o (round, low) / grin / open."""
+    n = len(ENV); out = []
+    hold, cur = 0, "rest"
+    for i in range(n):
+        seg = VOICE[i * hop:(i + 1) * hop]
+        if len(seg) < 32 or ENV[i] < 0.08:
+            v = "rest"
+        else:
+            sp = np.abs(np.fft.rfft(seg * np.hanning(len(seg))))
+            fr = np.fft.rfftfreq(len(seg), 1 / SR)
+            tot = sp.sum() + 1e-9
+            hf = sp[fr > 3500].sum() / tot
+            cen = (sp * fr).sum() / tot
+            if hf > 0.45:
+                v = "teeth"
+            elif cen < 900 and ENV[i] > 0.25:
+                v = "o"
+            elif ENV[i] > 0.85 and ENV[i] >= ENV[max(0, i - 1)] and ENV[i] >= ENV[min(n - 1, i + 1)]:
+                v = "open"            # only on syllable peaks
+            else:
+                v = "grin"
+        if v != cur and hold <= 0:
+            cur, hold = v, 2          # a mouth shape stays at least 2 frames, like the reference
+        hold -= 1
+        out.append(cur)
+    return out
+
+
+VIS = _visemes()
 
 # ---------------------------------------------------------------- background
 def background(ctx):
@@ -557,30 +590,19 @@ def presenter_state(t, f):
             prev, cur, tc = cur, g, t0
     if t > VO_END + 0.3:
         prev, cur, tc = cur, "wave", VO_END + 0.3
-    # relax to rest when nothing has been said for a while
-    tp = ease((t - tc) / 0.28)
-    mouth = float(ENV[min(f, len(ENV) - 1)])
-    si = 0
-    for i, s in enumerate(SENT):
-        if t >= s["start"]: si = i
-    shape = ["ee", "ah", "ee", "oh", "ee", "ah"][(f // 3 + si) % 6]
+    tp = ease((t - tc) / 0.3)             # ~9 frames per gesture change, like the reference
     face = None
     for t0, fc in FACE_T:
         if t0 <= t < t0 + (0.7 if fc == "happy" else 1.1):
             face = fc
     ph = (t + 0.7) % 3.1
-    blink = 1.0 if ph < 0.1 else (0.5 if ph < 0.14 else 0)
-    wave = 0.3 * math.sin((t - tc) * 11) if cur in ("wave",) else 0.0
-    # calm body, like the reference: tiny breathing, a little talk bounce, very small head motion
-    bob = 3 * math.sin(t * 2.2) + 5 * mouth
-    lean = 0.008 * math.sin(t * 0.8)
-    tilt = 0.015 * math.sin(t * 1.2) + 0.012 * mouth * math.sin(t * 7)
-    if 0 < t - tc < 0.35:
-        bob += 5 * math.sin((t - tc) / 0.35 * math.pi)
-    return dict(x=540, ground=1912, s=0.6, mouth=mouth, shape=shape, blink=blink,
-                brows="up" if face == "up" else "neutral", happy=1 if face == "happy" else 0, look=(0, 0),
-                pose=lerp_pose(prev, cur, tp), lean=lean, tilt=tilt, bob=bob, squash=1.0, hop=0.0,
-                smile=0.5, wave=wave)
+    blink = 1.0 if ph < 0.12 else 0
+    wave = 0.25 * math.sin((t - tc) * 10) if cur == "wave" else 0.0
+    arms, front = gesture_arms(MEC, prev, cur, tp, wave)
+    fi = min(f, len(VIS) - 1)
+    return dict(x=540, ground=1912, s=0.6, arms=arms, front=front, viseme=VIS[fi], open=float(ENV[fi]),
+                blink=blink, happy=1 if face == "happy" else 0, brow_lift=14 if face == "up" else 0,
+                tilt=0.018 * math.sin(t * 1.4) + 0.01 * float(ENV[fi]) * math.sin(t * 6))
 
 
 def caption_now(t):
@@ -626,7 +648,7 @@ def render(f, surf):
     word, age, key = caption_now(t)
     if word:
         caption(ctx, word, W / 2, 978, age, key)
-    draw_mecmation(ctx, presenter_state(t, f))
+    MEC.draw(ctx, presenter_state(t, f))
 
 
 # ---------------------------------------------------------------- sound effects
