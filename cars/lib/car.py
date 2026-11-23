@@ -96,9 +96,9 @@ def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, 
     top = min(p[1] for p in body); bot = max(p[1] for p in body)
 
     if ghost:
-        ink(ctx, body, hexc("#E4E6EA"), lw, hexc("#B9BDC4"), salt=salt)
+        ink(ctx, body, hexc("#D9DCE1"), lw * 1.2, hexc("#9EA3AB"), salt=salt)
         for wx in (wr, wf):
-            ink(ctx, ellipse(*P(wx, R / ys), R * L, R * L), hexc("#E4E6EA"), lw, hexc("#B9BDC4"), salt=salt)
+            ink(ctx, ellipse(*P(wx, R / ys), R * L, R * L), hexc("#D9DCE1"), lw * 1.2, hexc("#9EA3AB"), salt=salt)
         ctx.restore()
         return
 
