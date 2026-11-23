@@ -119,6 +119,7 @@ def car_in(ctx, lt, t0, kind, x, y, L, paint, out=None, dur=0.6, sound=True, par
 
 
 S.CTX.update(wt=lambda b, w, k=0: wt(b, w, k), st=lambda b, i: st(b, i), car_in=car_in, handle=HANDLE)
+S.CTX.setdefault("beat_t", BEAT_T); S.CTX.setdefault("car_plate", (540, 760, 170))
 SCENES = S.SCENES
 assert len(SCENES) == NB
 
@@ -160,6 +161,8 @@ def render(f, surf):
         ctx.save()
         SCENES[b](ctx, lt)
         ctx.restore()
+    if hasattr(S, "hero"):      # persistent layer over all scenes (the hero plate)
+        S.hero(ctx, t)
     word, age, key = caption_now(t)
     if word:
         caption(ctx, word, W / 2, 978, age, key)
