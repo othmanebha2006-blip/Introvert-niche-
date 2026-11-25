@@ -12,3 +12,7 @@
   Reference result: `videos/cars_ep1_audi_badges_mecmation.mp4` (code: `cars/audi_ep1/`, shared drawing code: `cars/lib/`).
   Key rules: everything drawn in code as vectors (no logos of real brands), the channel's presenter @Mecmation = the user's own animation clip `cars/character_mecmation/animation_reference.mov` used exactly as is (background keyed out, looped seamlessly frames 12-665 to the video length, `cars/lib/ref_presenter.py`),
   one big word caption at a time (yellow for keywords), badges and cars appear exactly on their spoken word, Kokoro voice bm_george at 1.22.
+- **How to BUILD every car video (hook, script structure, shots per word):** follow `cars/REFERENCE_ANALYSIS.md`
+  (analysis of the 3 reference videos the user gave). Quality/style/character stay ours. Key: 2.5 s hook
+  "[Brand] [topic], explained in one minute." with the final complex badge shown up front with "?" (open loop), rule first,
+  examples small->big, section signposts, one myth-bust, one surprising fact, "So a ... is ..." decodes the hook badge.
