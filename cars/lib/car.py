@@ -63,6 +63,11 @@ PAINT = {
 }
 
 
+# STYLE["real"] = True: the reference look (illustrated, realistic): thin steady ink lines, pencil hatching on the paint,
+# light see-through windows, black plastic cladding + roof rails on SUVs, white sticker border with a soft shadow.
+STYLE = {"real": False}
+
+
 def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, s_model=False, sline=False,
              tilt=0.0, bounce=0.0, rims="silver", calipers=None, shadow=True, alpha=1.0, highlight=None, salt=0,
              livery=False, ghost=False, wing=0):
@@ -71,7 +76,8 @@ def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, 
     wr, wf, R = WHEELS[kind]
     if rs:
         R *= 1.06
-    lw = max(2.2, L * 0.0055)
+    real = STYLE["real"]
+    lw = max(2.2, L * 0.0055) if not real else max(1.5, L * 0.0034)
 
     ys = YS[kind]
 
@@ -102,6 +108,15 @@ def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, 
         ctx.restore()
         return
 
+    if real and not ghost:
+        # white sticker border + soft drop shadow around the whole car
+        wheels_c = [(P(wx, R / ys), R * L) for wx in (wr, wf)]
+        for dy, colr, wdt in ((L * 0.010, (0, 0, 0, 0.16), L * 0.030), (0, (1, 1, 1, 1), L * 0.026)):
+            ctx.save(); ctx.translate(0, dy)
+            path(ctx, body); ctx.set_source_rgba(*colr); ctx.set_line_width(wdt); ctx.set_line_join(cairo.LINE_JOIN_ROUND); ctx.stroke_preserve(); ctx.fill()
+            for (cx_, cy_), rr_ in wheels_c:
+                ctx.arc(cx_, cy_, rr_ + wdt / 2, 0, 2 * math.pi); ctx.fill()
+            ctx.restore()
     if rs or s_model:
         n = 2
         for i in range(n):
@@ -120,6 +135,21 @@ def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, 
     # darker lower body
     low = [P(-0.02, 0.16 + (0.03 if kind == "suv" else 0)), P(1.02, 0.15 + (0.03 if kind == "suv" else 0)), P(1.02, -0.1), P(-0.02, -0.1)]
     path(ctx, low); ctx.set_source_rgba(0, 0, 0, 0.13); ctx.fill()
+    if real:
+        # pencil hatching: dense light strokes low on the body, a few on the upper panels
+        ctx.set_line_width(max(1.0, L * 0.0016))
+        for i in range(70):
+            u = i / 70
+            hx0 = x - 0.05 * L + u * 1.1 * L
+            ctx.move_to(hx0, y - 0.02 * L); ctx.line_to(hx0 + 0.07 * L, y - 0.22 * ys * L)
+        ctx.set_source_rgba(0, 0, 0, 0.07); ctx.stroke()
+        for i in range(24):
+            u = i / 24
+            hx0 = x + u * L
+            ctx.move_to(hx0, y - (belt - 0.03) * ys * L); ctx.line_to(hx0 + 0.05 * L, y - (belt - 0.11) * ys * L)
+        ctx.set_source_rgba(1, 1, 1, 0.10); ctx.stroke()
+        if kind in ("suv", "pickup"):   # black plastic cladding along the bottom
+            path(ctx, [P(-0.02, 0.135), P(1.02, 0.13), P(1.02, -0.1), P(-0.02, -0.1)]); ctx.set_source_rgba(*hexc("#2A2B2F")); ctx.fill()
     if livery:  # rally stripes
         for i, c in enumerate(["#1D1E22", "#C61F2B", "#9AA0A6"]):
             o = i * 0.022
@@ -143,13 +173,30 @@ def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, 
         line(ctx, flare, lw * 0.9, salt=salt)
     ctx.restore()
 
+    if real and kind in ("suv", "pickup"):   # thick black arch mouldings
+        for wx in (wr, wf):
+            cx, cy = P(wx, R / ys)
+            ar = R * L * 1.2
+            line(ctx, ellipse(cx, cy, ar, ar, 30, math.pi * 1.02, math.pi * 1.98), L * 0.022, hexc("#2A2B2F"), sketch=False)
     # glass
     glass = rpoly([P(*p) for p in gl], [0.012 * L, 0.03 * L, 0.03 * L, 0.012 * L])
     gtop = min(p[1] for p in glass); gbot = max(p[1] for p in glass)
     trim = hexc("#1A1B1E") if (rs or sline or s_model) else hexc("#C9CDD2")
-    gg = lin_grad(0, gtop, 0, gbot, [(0, hexc("#5C6F86")), (0.5, hexc("#2B3646")), (1, hexc("#1A2230"))])
+    if real:      # light see-through windows like an illustration
+        gg = lin_grad(0, gtop, 0, gbot, [(0, hexc("#F5F7FA")), (0.6, hexc("#DCE2E9")), (1, hexc("#B9C2CC"))])
+    else:
+        gg = lin_grad(0, gtop, 0, gbot, [(0, hexc("#5C6F86")), (0.5, hexc("#2B3646")), (1, hexc("#1A2230"))])
     ink(ctx, glass, None, 0, grad=gg)
     ctx.save(); path(ctx, glass); ctx.clip()
+    if real:      # seats / headrests seen through the glass + sketch strokes
+        for hx in (gl[1][0] + 0.06, (gl[1][0] + gl[2][0]) / 2 + 0.04):
+            ink(ctx, rrect(*P(hx, gl[1][1] - 0.035), 0.04 * L, 0.05 * ys * L, 0.016 * L), hexc("#9AA3AE", 0.35), 0)
+        ctx.set_line_width(max(1.0, L * 0.0018))
+        for i in range(8):
+            u = i / 8
+            sx0 = x + (gl[0][0] + u * (gl[3][0] - gl[0][0])) * L
+            ctx.move_to(sx0, gbot); ctx.line_to(sx0 + 0.06 * L, gtop)
+        ctx.set_source_rgba(0.35, 0.40, 0.48, 0.25); ctx.stroke()
     sx = x + (gl[1][0] + 0.08) * L
     path(ctx, [(sx, gtop - 5), (sx + 0.07 * L, gtop - 5), (sx - 0.04 * L, gbot + 5), (sx - 0.11 * L, gbot + 5)])
     ctx.set_source_rgba(1, 1, 1, 0.16); ctx.fill()
@@ -193,6 +240,12 @@ def draw_car(ctx, kind, x, y, L, paint="tango_red", wheel_rot=0.0, *, rs=False, 
     ink(ctx, rpoly([P(wr + R * 1.25, sill + 0.022), P(wf - R * 1.25, sill + 0.022), P(wf - R * 1.25, sill - 0.006), P(wr + R * 1.25, sill - 0.006)], 3),
         sill_c, dl, salt=salt)
 
+    if real and kind == "suv":   # roof rails
+        rt = max(p[1] for p in [(q[0], q[1]) for q in BODY[kind]])
+        ry = rt - 0.012
+        line(ctx, [P(gl[1][0] + 0.03, ry), P(gl[2][0] - 0.06, ry + 0.004)], L * 0.008, hexc("#2A2B2F"), sketch=False)
+        for fx_ in (gl[1][0] + 0.05, gl[2][0] - 0.08):
+            line(ctx, [P(fx_, ry), P(fx_, rt - 0.03)], L * 0.006, hexc("#2A2B2F"), sketch=False)
     # mirror
     mx, my = gl[3][0] - 0.01, gl[3][1] + 0.012
     ink(ctx, rpoly([P(mx - 0.035, my + 0.035), P(mx + 0.015, my + 0.04), P(mx + 0.02, my - 0.005), P(mx - 0.03, my)], 0.01 * L),

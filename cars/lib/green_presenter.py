@@ -45,13 +45,18 @@ def prepare(clip, cache_dir):
 
 
 class GreenPresenter:
-    def __init__(self, clip, cache_dir, clip_fps=24.0, scale=0.73, center_x=520.0, top_y=110.0):
+    def __init__(self, clip, cache_dir, clip_fps=24.0, scale=0.73, center_x=520.0, top_y=110.0, jump=None):
+        """jump=(j, i): when the clip is used for a longer voice, play to frame j then continue from the matching
+        frame i (< j) - pick a pair that looks the same so the jump is invisible."""
         self.dir = cache_dir
         self.n = prepare(clip, cache_dir)
-        self.fps, self.k, self.cx, self.top = clip_fps, scale, center_x, top_y
+        self.fps, self.k, self.cx, self.top, self.jump = clip_fps, scale, center_x, top_y, jump
 
     def draw(self, ctx, f, x, head_top_screen, video_fps=30):
-        idx = min(int(round(f / video_fps * self.fps)), self.n - 1)
+        idx = int(round(f / video_fps * self.fps))
+        if self.jump and idx > self.jump[0]:
+            idx -= self.jump[0] - self.jump[1]
+        idx = min(idx, self.n - 1)
         surf = cairo.ImageSurface.create_from_png(os.path.join(self.dir, f"k_{idx:05d}.png"))
         k = self.k
         ctx.save()
