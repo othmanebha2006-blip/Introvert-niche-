@@ -9,6 +9,7 @@ from ink import *
 from car import draw_car, WHEELS
 from widgets import *
 import widgets
+from hook import driving_car, topic_fx
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SERIES = "BADGE DECODED · #8"
@@ -299,40 +300,54 @@ def hero(ctx, t):          # decoding tracker under the header (keeps the open l
 
 
 # ================================================================ scenes
-def scene0(ctx, lt):          # HOOK
+def lexus_ticker(ctx, t):
+    """background ticker: Lexus two-letter names scrolling past (parallax), like the Mercedes alphabet ticker"""
+    names = ["IS", "ES", "LS", "UX", "NX", "RX", "GX", "LX", "RC", "LC", "LFA"]
+    off = (t * 260) % (len(names) * 120)
+    for k in range(-1, 2):
+        for i, n in enumerate(names):
+            x = k * len(names) * 120 + i * 120 - off + 60
+            if -80 < x < 1160:
+                ctx.save(); ctx.push_group()
+                chip(ctx, x, 430, n, "white", 34)
+                ctx.pop_group_to_source(); ctx.paint_with_alpha(0.55); ctx.restore()
+
+
+def scene0(ctx, lt):          # HOOK: the NX drives on a road; the badge is there from frame 0
     b = 0
-    car_in(ctx, lt, -0.5, "suv", 160, 880, 760, BLUE_, sline=True, rims="dark", sound=False)
-    if lt < 0.6:
-        speed_lines(ctx, 160, 880, 760, 280, 1.0 - lt, seed=3)
-    pop(ctx, lt, -0.2, W / 2, 230, lambda c: chip(c, 0, 0, "LEXUS", "dark", 70))
-    for i, (sx, sy) in enumerate([(340, 190), (740, 200)]):
-        sparkle(ctx, sx, sy, 26, lt + i)
-    te = wt(b, "explained")
-    if lt > te - 0.1:
-        p = ease_out_back(min(1, (lt - te + 0.1) / 0.35))
-        sfx_once(lt, te - 0.1, "pop")
-        ctx.save(); ctx.translate(W / 2, 420); ctx.scale(max(0.02, p), max(0.02, p)); ctx.translate(-W / 2, -420)
-        hook_row(ctx, lt, W / 2, 420, 66)
-        ctx.restore()
-        glow_ring(ctx, W / 2, 420, 440, 90, lt)
+    t = lt
+    driving_car(ctx, t, "suv", BLUE_, L=1000, x=10, y=905, ticker=lexus_ticker, sline=True, rims="dark")
+    tl = wt(b, "Lexus")
+    pop(ctx, lt, tl - 0.05, W / 2, 175, lambda c: chip(c, 0, 0, "LEXUS", "dark", 64))
+    if lt > tl:
+        for i, (sx, sy) in enumerate([(370, 150), (710, 160)]):
+            sparkle(ctx, sx, sy, 24, lt + i)
+    # the badge that the ending decodes: visible from the first frame
+    p = min(1, 0.55 + lt / 0.3)
+    ctx.save(); ctx.translate(W / 2, 290); ctx.scale(p, p); ctx.translate(-W / 2, -290)
+    shake = 3 * math.sin(lt * 40) if wt(b, "explained") < lt < wt(b, "explained") + 0.5 else 0
+    ctx.translate(shake, 0)
+    hook_row(ctx, lt, W / 2, 290, 62, show_q=False)
+    ctx.restore()
+    topic_fx(ctx, lt, W / 2, 290, 430, 70, wt(b, "model"), wt(b, "explained"))
 
 
-def scene1(ctx, lt):          # two letters tell you what kind of car it is
+def scene1(ctx, lt):          # two letters tell you what kind of car it is (the car keeps driving)
     b = 1
+    t = lt + CTX["beat_t"][1]
     tl, tk = wt(b, "letters"), wt(b, "kind")
-    if lt < tk - 0.25:     # the hook car stays until the outlines take over
-        car_in(ctx, lt, -1.0, "suv", 160, 880, 760, BLUE_, sline=True, rims="dark", sound=False)
+    if lt < tk - 0.25:
+        driving_car(ctx, t, "suv", BLUE_, L=1000, x=10, y=905, sline=True, rims="dark")
     for i, ch in enumerate("??"):
         x = 400 + i * 280
         filled = lt > tl
-        pop(ctx, lt, -0.1 + 0.1 * i, x, 420, lambda c, i=i, filled=filled: (ink(c, rrect(-110, -110, 220, 220, 30), hexc("#F2B800") if filled else hexc("#FFFFFF"), 6),
-                                                                         label(c, "?" if not filled else "NX"[i], 0, 8, 150, DARK)))
-    pop(ctx, lt, tl, W / 2, 580, lambda c: tag(c, "TWO LETTERS", "yellow", 44), sound=None)
-    if lt > tk - 0.2:
-        arrow(ctx, [(W / 2, 640), (W / 2, 700)], 9, DARK, 26)
-        pop(ctx, lt, tk - 0.2, 300, 880, lambda c: draw_car(c, "sedan", -200, 0, 400, ghost=True))
+        pop(ctx, lt, -0.1 + 0.1 * i, x, 300, lambda c, i=i, filled=filled: (ink(c, rrect(-100, -100, 200, 200, 30), hexc("#F2B800") if filled else hexc("#FFFFFF"), 6),
+                                                                         label(c, "?" if not filled else "NX"[i], 0, 8, 140, DARK)))
+    pop(ctx, lt, tl, W / 2, 445, lambda c: tag(c, "TWO LETTERS", "yellow", 42), sound=None)
+    if lt > tk - 0.25:
+        pop(ctx, lt, tk - 0.25, 300, 880, lambda c: draw_car(c, "sedan", -200, 0, 400, ghost=True))
         pop(ctx, lt, tk, 780, 880, lambda c: draw_car(c, "suv", -200, 0, 400, ghost=True))
-        pop(ctx, lt, tk + 0.1, W / 2, 760, lambda c: tag(c, "= WHAT KIND OF CAR", "dark", 38), sound=None)
+        pop(ctx, lt, tk + 0.1, W / 2, 640, lambda c: tag(c, "= WHAT KIND OF CAR", "dark", 38), sound=None)
 
 
 def scene2(ctx, lt):          # IS + ES saloons: IS smaller sportier, ES comfortable executive
