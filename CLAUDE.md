@@ -16,3 +16,6 @@
   (analysis of the 3 reference videos the user gave). Quality/style/character stay ours. Key: 2.5 s hook
   "[Brand] [topic], explained in one minute." with the final complex badge shown up front with "?" (open loop), rule first,
   examples small->big, section signposts, one myth-bust, one surprising fact, "So a ... is ..." decodes the hook badge.
+- **Car images:** reference cars are AI image-model illustrations, not code drawings. For every new script FIRST write
+  `<episode>/IMAGE_PROMPTS.md` (style prompt + one prompt per needed image, file names, edit-prompts for versions) per
+  `cars/CAR_ART_GUIDE.md`, then build the video from the images with `cars/lib/img_asset.py`.
