@@ -115,6 +115,37 @@ def find_wheels_geo(rgba, c):
     return [o[:3] for o in out], ground
 
 
+def refine_center(rgba, cx, cy, r, ground):
+    """Find the true hub centre: the point about which the wheel looks the same after a 72 deg turn."""
+    g = np.asarray(rgba.convert('L')).astype(np.float32)
+    best = None
+    R = int(r * 0.62)
+    yy, xx = np.mgrid[-R:R + 1, -R:R + 1]
+    disk = (xx ** 2 + yy ** 2) <= R * R
+    for dy in range(-60, 61, 3):
+        for dx in range(-30, 31, 3):
+            x0, y0 = int(round(cx + dx)), int(round(cy + dy))
+            if y0 - R < 0 or x0 - R < 0 or y0 + R + 1 > g.shape[0] or x0 + R + 1 > g.shape[1]:
+                continue
+            p = g[y0 - R:y0 + R + 1, x0 - R:x0 + R + 1]
+            pr = np.asarray(Image.fromarray(p).rotate(72, resample=Image.BILINEAR))
+            score = np.abs(p - pr)[disk].mean()
+            if best is None or score < best[0]:
+                best = (score, x0, y0)
+    # fine pass
+    _, bx, by = best
+    for dy in range(-2, 3):
+        for dx in range(-2, 3):
+            x0, y0 = bx + dx, by + dy
+            p = g[y0 - R:y0 + R + 1, x0 - R:x0 + R + 1]
+            pr = np.asarray(Image.fromarray(p).rotate(72, resample=Image.BILINEAR))
+            score = np.abs(p - pr)[disk].mean()
+            if score < best[0]:
+                best = (score, x0, y0)
+    _, bx, by = best
+    return float(bx), float(by), float(ground - by)
+
+
 def main(pairs):
     meta_p = os.path.join(HERE, 'build', 'svg', 'meta.json')
     meta = json.load(open(meta_p))
@@ -132,6 +163,7 @@ def main(pairs):
         canvas = Image.new('RGBA', (im.width + 2 * PAD, im.height + 2 * PAD), (0, 0, 0, 0))
         canvas.alpha_composite(im, (PAD, PAD))
         wheels, ground = find_wheels_geo(canvas, c)
+        wheels = [refine_center(canvas, w_[0], w_[1], w_[2], ground) for w_ in wheels]
         # keep the drawn version for reference
         old = os.path.join(HERE, 'build', 'png', f'{key}.png')
         if os.path.exists(old) and not os.path.exists(os.path.join(HERE, 'build', 'png_drawn', f'{key}.png')):
