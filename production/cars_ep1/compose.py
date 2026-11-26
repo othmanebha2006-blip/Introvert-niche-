@@ -628,7 +628,7 @@ def build_scenes():
     @scene('and the F comes')
     def s_fuji(fr, t, t0):
         keyrow(fr, [('F', 'red', t0 - 1, 90)], BADGE_Y, t)
-        pop(fr, icon('fuji', 420), W / 2, 680, t - at('Fuji'))
+        pop(fr, icon('fuji', 420), W / 2, 680, t - t0 - 0.1)
         if t > at('Speedway'):
             pop(fr, icon('flag', 170), 860, 560, t - at('Speedway'))
             pop(fr, tag('FUJI SPEEDWAY', bg=(30, 30, 30), size=44, dot=RED), W / 2, TAG_Y, t - at('Speedway'))
@@ -637,7 +637,9 @@ def build_scenes():
 
     @scene('Lexus also uses')
     def s_l(fr, t, t0):
-        keyrow(fr, [('L', 'gold', at('L', 1), 110)], 400, t)
+        keyrow(fr, [('L', 'gold', t0, 110)], 400, t)
+        if t > t0 + 0.4:
+            pop(fr, icon('crown', 150), 180, 420, t - t0 - 0.4)
         if t > at('luxury-focused'):
             pop(fr, tag('L = LUXURY', bg=GOLD, fg=INK, size=48), W / 2, 560, t - at('luxury-focused'))
         sc = 0.12
