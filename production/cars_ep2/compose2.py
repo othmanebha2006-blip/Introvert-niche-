@@ -111,6 +111,13 @@ def draw_car(L, key, cx, gy, pxmm, travel=0.0, angle=0.0, alpha=1.0, shine=None,
             ImageDraw.Draw(mask).ellipse((1, 1, 2 * r - 2, 2 * r - 2), fill=255)
             rp = patch.rotate(-math.degrees(travel / max(rr, 1)), resample=Image.BICUBIC)
             body.paste(rp, box[:2], mask)
+            # brake calipers don't spin: put the strongly coloured (red / yellow) caliper pixels back
+            pa = np.asarray(patch).astype(np.int16)
+            sat = pa[..., :3].max(2) - pa[..., :3].min(2)
+            cal = (sat > 110) & (((pa[..., 0] > 140) & (pa[..., 1] < 100)) | ((pa[..., 0] > 160) & (pa[..., 1] > 120) & (pa[..., 2] < 70)))
+            if cal.any():
+                cm = Image.fromarray((cal * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3))
+                body.paste(patch, box[:2], ImageChops.multiply(cm, mask))
     if shine is not None and 0 < shine < 1 and not ghost:
         a = np.asarray(body).astype(np.float32)
         hgt, wid = a.shape[:2]
