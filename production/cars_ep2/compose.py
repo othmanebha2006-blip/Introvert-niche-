@@ -768,7 +768,7 @@ def display(w):
     return c.upper()
 
 
-def draw_caption(fr, t):
+def draw_caption_v2(fr, t):
     g = None
     for grp in GROUPS:
         if WORDS[grp[0]]['s'] - 0.05 <= t <= WORDS[grp[-1]]['e'] + 0.12:
@@ -971,3 +971,63 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# ---------------------------------------------------------------- captions v3 (house rule from Nov 2026)
+# Helvetica-style bold, white fill, thick black outline + solid black drop shadow, 1-2 words,
+# words exactly as spoken (case + punctuation kept), no colours, no pop: hard cut to the next chunk.
+FONT_CAP = '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf'
+CAP_SIZE, CAP_Y = 104, 1032
+
+
+def caption_chunks_v3():
+    chunks, cur = [], []
+    for i, w in enumerate(WORDS):
+        txt = w['w']
+        if cur:
+            joined = ' '.join(WORDS[j]['w'] for j in cur + [i])
+            prev_end_punct = WORDS[cur[-1]]['w'][-1] in ',.'
+            if len(cur) < 2 and len(joined) <= 7 and not prev_end_punct:
+                cur.append(i)
+                continue
+            chunks.append(cur)
+        cur = [i]
+    if cur:
+        chunks.append(cur)
+    out = []
+    for k, ch in enumerate(chunks):
+        s0 = WORDS[ch[0]]['s']
+        nxt = WORDS[chunks[k + 1][0]]['s'] if k + 1 < len(chunks) else WORDS[ch[-1]]['e'] + 0.4
+        end = nxt if nxt - WORDS[ch[-1]]['e'] < 0.6 else WORDS[ch[-1]]['e'] + 0.3
+        out.append((s0, end, ' '.join(WORDS[j]['w'] for j in ch)))
+    return out
+
+
+CHUNKS_V3 = caption_chunks_v3()
+
+
+@functools.lru_cache(maxsize=512)
+def caption_img_v3(text, size=CAP_SIZE):
+    f = font(FONT_CAP, size)
+    sw = max(6, int(size * 0.085))      # outline
+    sh = max(4, int(size * 0.07))       # drop-shadow offset (down-right)
+    bb = f.getbbox(text, stroke_width=sw)
+    w, h = bb[2] - bb[0] + sh + 8, bb[3] - bb[1] + sh + 8
+    im = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    o = (4 - bb[0], 4 - bb[1])
+    d.text((o[0] + sh, o[1] + sh), text, font=f, fill=(0, 0, 0, 255), stroke_width=sw, stroke_fill=(0, 0, 0, 255))
+    d.text(o, text, font=f, fill=(255, 255, 255, 255), stroke_width=sw, stroke_fill=(0, 0, 0, 255))
+    return im
+
+
+def draw_caption(fr, t):
+    for s0, e0, text in CHUNKS_V3:
+        if s0 - 0.03 <= t < e0:
+            size = CAP_SIZE
+            im = caption_img_v3(text, size)
+            while im.width > 980 and size > 60:
+                size -= 6
+                im = caption_img_v3(text, size)
+            paste_clip(fr, im, int(W / 2 - im.width / 2), int(CAP_Y - im.height / 2))
+            return

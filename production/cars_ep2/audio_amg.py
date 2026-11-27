@@ -48,14 +48,24 @@ def main():
     for i in range(4):
         add(pop(600 + 150 * i), ph('all-wheel-drive') + i * 0.15, 0.3)
     add(ding(), ph('and if you'), 0.4)
+    # ---- house sound rule (Nov 2026): continuous bass-heavy bed ~12 dB under the voice, light ducking,
+    #      sound effects soft and short so the voice always leads
     mus = music(dur)
+    k = int(SR * 0.004)
+    low = np.convolve(mus, np.ones(k) / k, 'same')          # crude low-pass for extra bass weight
+    mus = mus + 1.2 * low
     frame = SR // 50
     m_env = np.array([np.sqrt(np.mean(v[i:i + frame] ** 2)) for i in range(0, n, frame)])
-    vad = np.convolve((20 * np.log10(m_env + 1e-6) > -38).astype(float), np.ones(10) / 10, 'same')
-    duck = np.repeat(1 - 0.55 * vad, frame)[:n]
-    mus = mus / (np.abs(mus).max() + 1e-9) * 0.12 * duck
-    sfx = sfx / max(1, np.abs(sfx).max()) * 0.55
-    mix = v / (np.abs(v).max() + 1e-9) * 0.9 + sfx + mus
+    voiced = 20 * np.log10(m_env + 1e-6) > -38
+    vad = np.convolve(voiced.astype(float), np.ones(10) / 10, 'same')
+    duck = np.repeat(1 - 0.25 * vad, frame)[:n]
+    vv = v / (np.abs(v).max() + 1e-9) * 0.9
+    v_rms = np.sqrt(np.mean(vv[np.repeat(voiced, frame)[:n]] ** 2))
+    m_rms = np.sqrt(np.mean(mus ** 2)) + 1e-9
+    mus = mus / m_rms * v_rms * 10 ** (-12 / 20) * duck
+    s_peak = np.abs(sfx).max() + 1e-9
+    sfx = sfx / s_peak * 0.28
+    mix = vv + sfx + mus
     mix = mix / max(1.0, np.abs(mix).max() / 0.98)
     st = np.stack([mix + mus * 0.15, mix - mus * 0.15], 1)
     with wave.open(os.path.join(HERE, 'build', 'mix.wav'), 'wb') as w:
