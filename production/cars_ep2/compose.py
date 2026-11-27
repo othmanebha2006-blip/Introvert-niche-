@@ -977,7 +977,7 @@ if __name__ == '__main__':
 # Exactly the user's sample: Montserrat Black, ALL CAPS, yellow fill, thick black outline + solid black
 # drop shadow (down-right), 1-3 words per chunk (<= 11 characters), punctuation kept, hard cut, no pop.
 FONT_CAP = os.path.join(HERE, '..', 'fonts', 'Montserrat-Black.woff')
-CAP_SIZE, CAP_Y = 92, 1032
+CAP_SIZE, CAP_Y = 76, 1032
 CAP_FILL = (246, 232, 36)
 
 

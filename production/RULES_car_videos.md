@@ -40,7 +40,7 @@ These rules apply to every future video. They come from what worked in episode 2
 - **1–3 words at a time:** words are joined if the chunk is 11 characters or fewer ("IF YOU", "WANT A", "THIS IS IT.", "AND THE"); longer words stand alone. A new chunk always starts after a comma or full stop.
 - **Punctuation kept** ("COMING,", "THIS IS IT.").
 - **No pop animation:** each chunk simply replaces the previous one. It stays until the next chunk, or disappears in a pause longer than 0.6 s.
-- One line, centred above the character's head. The size shrinks automatically if the line is too wide.
+- Text size 76 px (made a little smaller at the user's request), one line, centred above the character's head. The size shrinks automatically if the line is too wide.
 - (Earlier styles, the white/black Helvetica of v3 and its inverted version, are no longer used.)
 
 ## 6. Sound (new rule)
