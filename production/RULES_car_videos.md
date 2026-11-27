@@ -40,6 +40,19 @@ These rules apply to every future video. They come from what worked in episode 2
   - a "part = meaning" card under it.
 - **Ending:** a cheat sheet that sums up the whole system, then "FOLLOW @Mecmation". The last frame matches the first, so the video loops.
 
+## 4b. Explain once, no text cards (rule, 27 Nov 2026, from the user's notes on the Audi video)
+- **Every idea gets one explanation only:** the voice says it, and the picture shows it with a car, a key, an icon or an animation. That's all.
+- **No sentence cards** that repeat the idea in words. Examples of what is now banned:
+  - "Q = SUV", "A = LOWER CARS", "HATCH · SALOON · ESTATE";
+  - "NUMBER = POSITION IN THE RANGE", "HIGHER = BIGGER + PRICIER";
+  - "COMPACT" / "LARGER" labels, and length labels repeated next to the cars.
+- **What stays:**
+  - the name's keys at the top (the letters and numbers being explained), circled at the moment they're spoken;
+  - icons and animations (a pump, a plug, a battery, a staircase, a stamp);
+  - a single word only when the picture can't show it (for example "RENN" / "SPORT" under the letters R S).
+- The reference videos explain with few elements, so the viewer understands the idea at a glance. The video must not feel like code.
+- In the pipeline: `compose2.TEXT_CARDS = False` (the default) switches off every `meaning()` card.
+
 ## 5. Captions (final rule, v4, 27 Nov 2026: matches the user's second sample exactly)
 - Font: **Montserrat Black** (`production/fonts/Montserrat-Black.woff`), **ALL CAPS**, letter spacing tightened (-5.5%).
 - Colours: **yellow fill `#F6E824`, thick black outline (≈10% of the text size), solid black shadow** offset down-right (≈7.5%).

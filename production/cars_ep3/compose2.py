@@ -515,7 +515,12 @@ def bar(L, t, keys, y=330, t0=None, hi=None, gap=14):
     return boxes
 
 
+TEXT_CARDS = False   # rule (27 Nov 2026): explain once - no sentence cards repeating what the voice/visual already says
+
+
 def meaning(L, t, ta, text, col, y=470, x=W / 2, fg=None, size=42):
+    if not TEXT_CARDS:
+        return
     if t < ta:
         return
     fg = fg or (INK if col in (YEL, WHITE, GOLD) else WHITE)
