@@ -2,6 +2,12 @@
 
 These rules apply to every future video. They come from what worked in episode 2 (Mercedes-AMG) and from the reference samples.
 
+## 0. Word timing (rule, 27 Nov 2026)
+- **Always use forced alignment** (`force_align.py`, pocketsphinx with its bundled English model). It aligns the exact script text to the voice word by word.
+- The old method (`align.py`, pause-based) drifted by up to 2 seconds on a voice with few pauses (Audi episode), so the visuals came before the voice.
+- Names and numbers are spelled out the way they're spoken ("A6" = "a six", "TFSI" = "t f s i"), using the `REP` table in `force_align.py`.
+- After aligning, compare against the voice before rendering.
+
 ## 1. Format
 - 1080×1920, 30 fps, about 60–75 s, final loudness -14 LUFS (true peak -1 dB).
 - Pale grey background with a grid (graph paper). Monospace header at the top: `CAR NAMES DECODED · #N` with the brand on the right, plus a section progress bar under it.

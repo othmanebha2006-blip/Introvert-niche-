@@ -428,7 +428,7 @@ def beats(L, t, cars):
             tr = t - ph('sportier details')
             ellipse_draw(L, rx, ry, 85, 85, tr)
             ellipse_draw(L, info['x0'] + info['w'] - 40, GY - 70, 75, 60, tr - 0.15)
-            meaning(L, t, ph('sportier details'), 'SPORTY BUMPERS + WHEELS', BLUE, y=430, size=30)
+            meaning(L, t, ph('sportier details'), 'SPORTY BUMPERS + WHEELS', BLUE, y=430, x=310, size=28)
         if t > ph('not a full'):
             gauge(L, 170, 560, 80, 0.22 + 0.02 * math.sin(t * 30))
             pop(L, tag('SAME POWER', bg=DARK, size=26), 170, 640, t - ph('not a full'))
@@ -459,7 +459,7 @@ def beats(L, t, cars):
         if t > ph('size'):
             labs = ('A3', 'A5', 'A6', 'A8')
             act = min(3, int((t - ph('size')) / 0.35))
-            stairs(L, t, ph('size') - 0.2, act, x0=600, y0=600, sw=85, labels=labs)
+            stairs(L, t, ph('size') - 0.2, act, x0=650, y0=600, sw=85, labels=labs)
             meaning(L, t, ph('size'), 'NAME = SIZE + POSITION', BLUE, y=TAG_LOW, size=38)
     # ---- recap
     t0, t1 = ph('so an RS') - 0.1, ph('and if you') - 0.05
