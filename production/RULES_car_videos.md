@@ -34,12 +34,14 @@ These rules apply to every future video. They come from what worked in episode 2
   - a "part = meaning" card under it.
 - **Ending:** a cheat sheet that sums up the whole system, then "FOLLOW @Mecmation". The last frame matches the first, so the video loops.
 
-## 5. Captions (new rule, v3)
-- Font: **Helvetica/Arial Bold** (FreeSans Bold), **black fill, thick white outline (≈8.5% of the text size), solid white shadow** offset down-right (≈7%). The colours are inverted from the sample so the text reads more clearly on the light background (user decision, 27 Nov 2026).
-- **1–2 words at a time:** two short words are joined if together they are 7 characters or fewer ("in one", "and the"); longer words stand alone.
-- **Words exactly as spoken:** the case and punctuation are kept ("minute,", "born,"). No uppercase, no colours.
+## 5. Captions (final rule, v4, 27 Nov 2026: matches the user's second sample exactly)
+- Font: **Montserrat Black** (`production/fonts/Montserrat-Black.woff`), **ALL CAPS**, letter spacing tightened (-5.5%).
+- Colours: **yellow fill `#F6E824`, thick black outline (≈10% of the text size), solid black shadow** offset down-right (≈7.5%).
+- **1–3 words at a time:** words are joined if the chunk is 11 characters or fewer ("IF YOU", "WANT A", "THIS IS IT.", "AND THE"); longer words stand alone. A new chunk always starts after a comma or full stop.
+- **Punctuation kept** ("COMING,", "THIS IS IT.").
 - **No pop animation:** each chunk simply replaces the previous one. It stays until the next chunk, or disappears in a pause longer than 0.6 s.
 - One line, centred above the character's head. The size shrinks automatically if the line is too wide.
+- (Earlier styles, the white/black Helvetica of v3 and its inverted version, are no longer used.)
 
 ## 6. Sound (new rule)
 - **A bass-heavy music bed plays the whole video**, about **12 dB under the voice**, with light ducking (25%). It never goes silent.
