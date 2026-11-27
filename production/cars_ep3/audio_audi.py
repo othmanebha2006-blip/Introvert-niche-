@@ -4,8 +4,7 @@ import numpy as np
 import compose as C
 import compose_audi as A
 from compose2 import SEGS
-from audio import SR, whoosh, pop, thud, ding, music
-from audio2 import rev, screech, zap
+from sfx_clean import SR, whoosh, pop, thud, ding, music, rev, screech, zap
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -63,7 +62,7 @@ def main():
     m_rms = np.sqrt(np.mean(mus ** 2)) + 1e-9
     mus = mus / m_rms * v_rms * 10 ** (-12 / 20) * duck
     s_peak = np.abs(sfx).max() + 1e-9
-    sfx = sfx / s_peak * 0.28
+    sfx = sfx / s_peak * 0.22
     mix = vv + sfx + mus
     mix = mix / max(1.0, np.abs(mix).max() / 0.98)
     st = np.stack([mix + mus * 0.15, mix - mus * 0.15], 1)
