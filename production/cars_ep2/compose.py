@@ -1016,8 +1016,9 @@ def caption_img_v3(text, size=CAP_SIZE):
     im = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     o = (4 - bb[0], 4 - bb[1])
-    d.text((o[0] + sh, o[1] + sh), text, font=f, fill=(0, 0, 0, 255), stroke_width=sw, stroke_fill=(0, 0, 0, 255))
-    d.text(o, text, font=f, fill=(255, 255, 255, 255), stroke_width=sw, stroke_fill=(0, 0, 0, 255))
+    # inverted colours (user rule, Nov 27): black fill, white outline, white drop shadow
+    d.text((o[0] + sh, o[1] + sh), text, font=f, fill=(255, 255, 255, 255), stroke_width=sw, stroke_fill=(255, 255, 255, 255))
+    d.text(o, text, font=f, fill=(0, 0, 0, 255), stroke_width=sw, stroke_fill=(255, 255, 255, 255))
     return im
 
 

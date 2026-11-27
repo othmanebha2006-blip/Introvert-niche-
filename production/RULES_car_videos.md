@@ -35,7 +35,7 @@ These rules apply to every future video. They come from what worked in episode 2
 - **Ending:** a cheat sheet that sums up the whole system, then "FOLLOW @Mecmation". The last frame matches the first, so the video loops.
 
 ## 5. Captions (new rule, v3)
-- Font: **Helvetica/Arial Bold** (FreeSans Bold), **white fill, thick black outline (≈8.5% of the text size), solid black shadow** offset down-right (≈7%).
+- Font: **Helvetica/Arial Bold** (FreeSans Bold), **black fill, thick white outline (≈8.5% of the text size), solid white shadow** offset down-right (≈7%). The colours are inverted from the sample so the text reads more clearly on the light background (user decision, 27 Nov 2026).
 - **1–2 words at a time:** two short words are joined if together they are 7 characters or fewer ("in one", "and the"); longer words stand alone.
 - **Words exactly as spoken:** the case and punctuation are kept ("minute,", "born,"). No uppercase, no colours.
 - **No pop animation:** each chunk simply replaces the previous one. It stays until the next chunk, or disappears in a pause longer than 0.6 s.
