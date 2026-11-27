@@ -49,13 +49,10 @@ These rules apply to every future video. They come from what worked in episode 2
 - Text size 76 px (made a little smaller at the user's request), one line, centred above the character's head. The size shrinks automatically if the line is too wide.
 - (Earlier styles, the white/black Helvetica of v3 and its inverted version, are no longer used.)
 
-## 6. Sound (updated 27 Nov 2026: no noisy sounds)
-- **Clean sounds only** (`sfx_clean.py`): every effect is built from smooth tones with soft fades. Nothing noise-based: no hiss, no crackle, no tyre squeal, no buzz.
-  - whoosh = a low tone that glides and swells;
-  - pop = a short, gentle blip;
-  - stamp = a clean low boom;
-  - engine = a smooth rise;
-  - charging = a soft shimmer.
-- **Music:** a warm pad, a soft bass and a gentle kick, about 12 dB under the voice with light ducking. No hi-hats and no noise snare.
-- **Effects stay low** (peak at about 22% of the mix), so the voice always leads.
-- **Check before publishing:** the final mix should carry no more high frequencies (6–16 kHz) than the voice on its own.
+## 6. Sound (updated 27 Nov 2026)
+- **A bass-heavy music bed plays the whole video**, about **12 dB under the voice**, with light ducking (25%). It never goes silent.
+- **The same sound effects as before:**
+  - a whoosh when a car enters or leaves;
+  - a pop when a badge or card appears;
+  - a stamp, a ding, an engine rev and a tyre squeal at key moments.
+- **Effects volume is low** (peak at 12% of the mix, lowered at the user's request) so they never get in the way of the voice. The effects themselves stay the same; only their volume was turned down.
